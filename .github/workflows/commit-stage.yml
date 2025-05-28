@@ -1,0 +1,67 @@
+name: Backend Commit Stage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  commit-stage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Compile Code (TypeScript)
+        run: npm run build
+
+      - name: Run Unit Tests
+        run: npm test -- --coverage --watchAll=false
+
+      - name: Run Component Tests
+        run: npm run test:component
+
+      - name: Run Contract Verification Tests
+        run: npm run test:contract
+
+      - name: Run Linting
+        run: npm run lint
+
+      - name: Run Static Code Analysis
+        run: npm run lint:check
+
+      - name: Build Docker Image
+        run: |
+          docker build -t digital-kudos-wall-backend:${{ github.sha }} .
+          docker tag digital-kudos-wall-backend:${{ github.sha }} digital-kudos-wall-backend:latest
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Docker Image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker tag digital-kudos-wall-backend:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/digital-kudos-wall-backend:${{ github.sha }}
+          docker tag digital-kudos-wall-backend:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/digital-kudos-wall-backend:latest
+          docker push ghcr.io/${{ github.repository_owner }}/digital-kudos-wall-backend:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/digital-kudos-wall-backend:latest 
