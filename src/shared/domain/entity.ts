@@ -1,6 +1,6 @@
 import { UniqueEntityID } from "./unique-entity-id";
 
-const isEntity = (v: any): v is Entity<any> => {
+const isEntity = <T>(v: unknown): v is Entity<T> => {
   return v instanceof Entity;
 };
 
@@ -22,7 +22,7 @@ export abstract class Entity<T> {
       return true;
     }
 
-    if (!isEntity(object)) {
+    if (!isEntity<T>(object)) {
       return false;
     }
 
