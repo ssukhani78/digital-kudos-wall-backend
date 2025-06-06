@@ -2,19 +2,20 @@ import { RegisterUserUseCase } from "../register-user.use-case";
 import { UserRepository } from "../../domain/user.repository";
 import { EmailService } from "../../domain/email.service";
 import { User } from "../../domain/user.entity";
-import { Email } from "../../domain/value-objects/email";
-import { Password } from "../../domain/value-objects/password";
 import { UserAlreadyExistsError } from "../../domain/errors/user-already-exists.error";
+import { UserBuilder } from "../../infrastructure/persistence/prisma/__tests__/user.builder";
 
-describe("RegisterUserUseCase", () => {
+describe("RegisterUserUseCase (Sociable Unit Test)", () => {
   let useCase: RegisterUserUseCase;
   let userRepository: UserRepository;
   let emailService: EmailService;
+  let userBuilder: UserBuilder;
 
   beforeEach(() => {
     userRepository = {
       findByEmail: jest.fn(),
       save: jest.fn(),
+      findById: jest.fn(),
     };
 
     emailService = {
@@ -22,6 +23,7 @@ describe("RegisterUserUseCase", () => {
     };
 
     useCase = new RegisterUserUseCase(userRepository, emailService);
+    userBuilder = new UserBuilder();
   });
 
   describe("execute", () => {
@@ -48,12 +50,9 @@ describe("RegisterUserUseCase", () => {
       const email = "existing@example.com";
       const password = "ValidPass123!";
 
-      const existingUser = User.create({
-        email: Email.create(email).getValue(),
-        password: Password.create(password).getValue(),
-      }).getValue();
+      const existingUser = userBuilder.withEmail(email).withPassword(password).build();
 
-      userRepository.findByEmail = jest.fn().mockResolvedValue(existingUser);
+      (userRepository.findByEmail as jest.Mock).mockResolvedValue(existingUser);
 
       const result = await useCase.execute({ email, password });
 

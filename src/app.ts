@@ -1,6 +1,7 @@
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import { PrismaClient } from "@prisma/client";
 import setupUserRoutes from "./modules/user/presentation/user.routes";
 import { RegisterUserUseCase } from "./modules/user/application/register-user.use-case";
 import { PrismaUserRepository } from "./modules/user/infrastructure/persistence/prisma/prisma-user.repository";
@@ -19,7 +20,8 @@ export function createApp(): Application {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  const userRepository = new PrismaUserRepository();
+  const prisma = new PrismaClient();
+  const userRepository = new PrismaUserRepository(prisma);
   const emailService = new NodemailerEmailService();
   const registerUserUseCase = new RegisterUserUseCase(userRepository, emailService);
 
