@@ -4,11 +4,7 @@ import { User } from "../../../domain/user.entity";
 import { UserMapper } from "./mappers/user.mapper";
 
 export class PrismaUserRepository implements UserRepository {
-  private prisma: PrismaClient;
-
-  constructor() {
-    this.prisma = new PrismaClient();
-  }
+  constructor(private readonly prisma: PrismaClient) {}
 
   async findByEmail(emailValue: string): Promise<User | null> {
     const prismaUser = await this.prisma.user.findUnique({
@@ -22,8 +18,30 @@ export class PrismaUserRepository implements UserRepository {
     return UserMapper.toDomain(prismaUser);
   }
 
+  async findById(id: string): Promise<User | null> {
+    const prismaUser = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!prismaUser) {
+      return null;
+    }
+
+    return UserMapper.toDomain(prismaUser);
+  }
+
   async save(user: User): Promise<void> {
-    const data = UserMapper.toPersistence(user);
+    const hashedPassword = await user.password.hashPassword();
+    const userWithHashedPassword = User.create(
+      {
+        email: user.email,
+        password: hashedPassword,
+        isEmailVerified: user.isEmailVerified,
+      },
+      user.id
+    ).getValue();
+
+    const data = UserMapper.toPersistence(userWithHashedPassword);
 
     await this.prisma.user.upsert({
       where: { id: user.id.toString() },

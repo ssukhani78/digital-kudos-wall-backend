@@ -61,3 +61,8 @@ jspm_packages/
 .DS_Store
 Thumbs.db 
 /src/generated/prisma
+
+# Prisma
+# Ignore all database files
+*.db
+*.db-journal
