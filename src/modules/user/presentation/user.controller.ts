@@ -11,7 +11,11 @@ export class UserController {
     const result = await this.registerUserUseCase.execute(registerUserDto);
 
     if (result.isSuccess) {
-      res.status(201).send();
+      const user = result.getValue();
+      res.status(201).json({
+        id: user.id.toString(),
+        email: user.email.value,
+      });
     } else {
       const error = result.error();
       if (error instanceof UserAlreadyExistsError) {

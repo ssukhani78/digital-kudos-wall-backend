@@ -1,13 +1,14 @@
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { PrismaClient } from "@prisma/client";
 import setupUserRoutes from "./modules/user/presentation/user.routes";
 import { RegisterUserUseCase } from "./modules/user/application/register-user.use-case";
-import { PrismaUserRepository } from "./modules/user/infrastructure/persistence/prisma/prisma-user.repository";
-import { NodemailerEmailService } from "./modules/user/infrastructure/services/nodemailer-email.service";
 
-export function createApp(): Application {
+interface AppDependencies {
+  registerUserUseCase: RegisterUserUseCase;
+}
+
+export function createApp(dependencies: AppDependencies): Application {
   const app = express();
   app.use(helmet());
   app.use(
@@ -20,12 +21,7 @@ export function createApp(): Application {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  const prisma = new PrismaClient();
-  const userRepository = new PrismaUserRepository(prisma);
-  const emailService = new NodemailerEmailService();
-  const registerUserUseCase = new RegisterUserUseCase(userRepository, emailService);
-
-  const userRoutes = setupUserRoutes(registerUserUseCase);
+  const userRoutes = setupUserRoutes(dependencies.registerUserUseCase);
   app.use("/api/v1/users", userRoutes);
 
   app.get("/health", (req: Request, res: Response) => {

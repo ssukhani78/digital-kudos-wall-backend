@@ -12,10 +12,12 @@ export interface RegisterUserDTO {
   password: string;
 }
 
-export class RegisterUserUseCase implements UseCase<RegisterUserDTO, Result<void, string | UserAlreadyExistsError>> {
+export type RegisterUserResponse = Result<User, string | UserAlreadyExistsError>;
+
+export class RegisterUserUseCase implements UseCase<RegisterUserDTO, RegisterUserResponse> {
   constructor(private readonly userRepository: UserRepository, private readonly emailService: EmailService) {}
 
-  async execute(request: RegisterUserDTO): Promise<Result<void, string | UserAlreadyExistsError>> {
+  async execute(request: RegisterUserDTO): Promise<RegisterUserResponse> {
     if (!request.email || !request.password) {
       return Result.fail("Email and password are required.");
     }
@@ -55,6 +57,6 @@ export class RegisterUserUseCase implements UseCase<RegisterUserDTO, Result<void
     await this.userRepository.save(user);
     await this.emailService.sendConfirmationEmail(email.value);
 
-    return Result.ok();
+    return Result.ok<User>(user);
   }
 }
