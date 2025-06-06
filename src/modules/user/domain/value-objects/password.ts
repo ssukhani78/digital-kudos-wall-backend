@@ -55,4 +55,11 @@ export class Password extends ValueObject<PasswordProps> {
     const hashedPassword = await bcrypt.hash(this.props.value, 10);
     return Password.createHashed(hashedPassword).getValue();
   }
+
+  public static reconstitute(hashedPassword: string): Result<Password, string> {
+    if (!hashedPassword || hashedPassword.length === 0) {
+      return Result.fail<Password>("Stored password cannot be empty.");
+    }
+    return Result.ok<Password>(new Password({ value: hashedPassword, hashed: true }));
+  }
 }

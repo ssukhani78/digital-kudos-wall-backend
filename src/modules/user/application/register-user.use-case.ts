@@ -16,6 +16,10 @@ export class RegisterUserUseCase implements UseCase<RegisterUserDTO, Result<void
   constructor(private readonly userRepository: UserRepository, private readonly emailService: EmailService) {}
 
   async execute(request: RegisterUserDTO): Promise<Result<void, string | UserAlreadyExistsError>> {
+    if (!request.email || !request.password) {
+      return Result.fail("Email and password are required.");
+    }
+
     const emailOrError = Email.create(request.email);
     const passwordOrError = Password.create(request.password);
 
@@ -39,6 +43,7 @@ export class RegisterUserUseCase implements UseCase<RegisterUserDTO, Result<void
     const userOrError = User.create({
       email,
       password,
+      isEmailVerified: false,
     });
 
     if (userOrError.isFailure) {

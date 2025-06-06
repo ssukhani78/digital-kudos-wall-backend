@@ -4,12 +4,16 @@ import { Result } from "../../../shared/core/result";
 import { Email } from "./value-objects/email";
 import { Password } from "./value-objects/password";
 
-interface UserProps {
+export interface UserProps {
   email: Email;
   password: Password;
-  isEmailVerified?: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  isEmailVerified: boolean;
+}
+
+export interface UserSnapshot extends UserProps {
+  id: UniqueEntityID;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export class User extends Entity<UserProps> {
@@ -29,27 +33,25 @@ export class User extends Entity<UserProps> {
     return this.props.isEmailVerified || false;
   }
 
-  get createdAt(): Date {
-    return this.props.createdAt || new Date();
-  }
-
-  get updatedAt(): Date {
-    return this.props.updatedAt || new Date();
-  }
-
   public static create(props: UserProps, id?: UniqueEntityID): Result<User> {
     const defaultProps: UserProps = {
       ...props,
       isEmailVerified: props.isEmailVerified || false,
-      createdAt: props.createdAt || new Date(),
-      updatedAt: props.updatedAt || new Date(),
     };
 
     return Result.ok(new User(defaultProps, id));
   }
 
-  public markEmailAsVerified(): void {
-    this.props.isEmailVerified = true;
-    this.props.updatedAt = new Date();
+  public static reconstitute(snapshot: UserSnapshot): Result<User, string> {
+    const user = new User(
+      {
+        email: snapshot.email,
+        password: snapshot.password,
+        isEmailVerified: snapshot.isEmailVerified,
+      },
+      snapshot.id
+    );
+
+    return Result.ok<User>(user);
   }
 }

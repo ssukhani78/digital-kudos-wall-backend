@@ -1,14 +1,14 @@
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import setupUserRoutes from "./modules/user/presentation/user.routes";
+import { RegisterUserUseCase } from "./modules/user/application/register-user.use-case";
+import { PrismaUserRepository } from "./modules/user/infrastructure/persistence/prisma/prisma-user.repository";
+import { NodemailerEmailService } from "./modules/user/infrastructure/services/nodemailer-email.service";
 
 export function createApp(): Application {
   const app = express();
-
-  // Security middleware
   app.use(helmet());
-
-  // CORS middleware
   app.use(
     cors({
       origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -16,11 +16,16 @@ export function createApp(): Application {
     })
   );
 
-  // Body parsing middleware
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // Health check endpoint
+  const userRepository = new PrismaUserRepository();
+  const emailService = new NodemailerEmailService();
+  const registerUserUseCase = new RegisterUserUseCase(userRepository, emailService);
+
+  const userRoutes = setupUserRoutes(registerUserUseCase);
+  app.use("/api/v1/users", userRoutes);
+
   app.get("/health", (req: Request, res: Response) => {
     res.status(200).json({
       status: "healthy",
@@ -30,7 +35,6 @@ export function createApp(): Application {
     });
   });
 
-  // API routes
   app.get("/api/v1/kudos", (req: Request, res: Response) => {
     res.status(200).json({
       message: "Digital Kudos Wall API - MVP Version",
@@ -43,7 +47,6 @@ export function createApp(): Application {
     });
   });
 
-  // Root endpoint
   app.get("/", (req: Request, res: Response) => {
     res.status(200).json({
       message: "Welcome to Digital Kudos Wall Backend API",
@@ -55,7 +58,6 @@ export function createApp(): Application {
     });
   });
 
-  // 404 handler
   app.use("*", (req: Request, res: Response) => {
     res.status(404).json({
       error: "Not Found",
