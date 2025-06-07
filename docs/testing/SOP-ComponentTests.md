@@ -80,6 +80,16 @@ These tests align with the "Component Tests" category in the Modern Test Pyramid
   });
   ```
 
+### 5.1. Test Setup and Teardown
+
+- **Standard:** For a test suite (`describe` block) that targets a single component, common setup logic, especially the instantiation of mocks, SHOULD be placed in a `beforeEach` hook.
+- **Rationale:** This reduces code duplication across tests, making the suite cleaner and easier to maintain. It also ensures a clean set of mocks for every single test case, preventing test-to-test contamination.
+
+### 5.2. Assertion Granularity in Component Tests
+
+- **Standard:** Assertions in component tests SHOULD focus on the public contract: HTTP status codes, response body structure, and essential headers. They SHOULD also verify that the component correctly interacts with its dependencies (e.g., asserting that a repository's `save` method was called). They SHOULD NOT re-test fine-grained business logic that is covered by unit tests.
+- **Rationale:** The goal is to test the integration and wiring of the classes within the component. For example, if a use case has complex validation rules, the component test should only verify that invalid input leads to the correct error response (e.g., a 400 Bad Request). The specific validation rules and their corresponding error messages should be exhaustively tested in that use case's own sociable unit tests. This prevents brittle tests and respects the test pyramid.
+
 ## 6. What These Tests Are NOT
 
 - **Not Unit Tests:** They are not focused on a single class but on the collaboration between several classes (route, controller, use case).
@@ -91,6 +101,10 @@ These tests align with the "Component Tests" category in the Modern Test Pyramid
 - `SOP-NarrowIntegrationTests.md`
 - `SOP-TestDoubles.md`
 
-## 8. Enforcement
+## 8. Naming Conventions
+
+- **Standard:** Component test files MUST follow the naming convention `<component-name>.component.test.ts`. For application-level tests that span multiple components or test the application's overall wiring, `app.component.test.ts` is appropriate.
+
+## 9. Enforcement
 
 Violation of these standards will result in build failures during CI and/or rejection during code review. These standards are non-negotiable to ensure the quality and maintainability of our component tests.
