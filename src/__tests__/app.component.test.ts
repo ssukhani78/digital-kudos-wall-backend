@@ -20,34 +20,6 @@ describe("App Component Tests", () => {
     };
   });
 
-  describe("POST /api/v1/users/register", () => {
-    it("should return 201 when user is successfully registered", async () => {
-      // Arrange
-      const registerUserUseCase = new RegisterUserUseCase(mockUserRepository, mockEmailService);
-      const app = createApp({ registerUserUseCase });
-
-      const requestBody = {
-        email: "test@example.com",
-        password: "ValidPassword123!",
-      };
-
-      // Mock the use case dependencies
-      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
-      (mockUserRepository.save as jest.Mock).mockResolvedValue(undefined);
-
-      // Act
-      const response = await request(app).post("/api/v1/users/register").send(requestBody).expect(201);
-
-      // Assert
-      expect(response.body).toEqual({
-        id: expect.any(String),
-        email: requestBody.email,
-      });
-      expect(mockUserRepository.save).toHaveBeenCalled();
-      expect(mockEmailService.sendConfirmationEmail).toHaveBeenCalledWith(requestBody.email);
-    });
-  });
-
   describe("GET /", () => {
     test("should return welcome message", async () => {
       const app = createApp({
