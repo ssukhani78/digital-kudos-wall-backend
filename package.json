@@ -11,10 +11,11 @@
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "jest --testPathIgnorePatterns=integration .builder.ts",
     "test:integration": "DATABASE_URL=\"file:./test.db\" jest --testPathPattern=integration",
-    "test:component": "jest --testPathPattern=component --passWithNoTests",
-    "test:contract": "jest --testPathPattern=contract --passWithNoTests",
-    "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0",
-    "lint:check": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0 --format=json"
+    "test:component": "jest --testPathPattern=component",
+    "test:contract": "jest --testPathPattern=contract",
+    "lint": "eslint . --ext .ts",
+    "lint:check": "eslint . --ext .ts --quiet",
+    "prettier": "prettier --write ."
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",
@@ -28,11 +29,12 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@pact-foundation/pact": "^15.0.1",
     "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
-    "@types/jest": "^29.5.0",
-    "@types/node": "^20.10.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.0",
     "@types/nodemailer": "^6.4.17",
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^6.14.0",

@@ -1,0 +1,88 @@
+{
+  "consumer": {
+    "name": "DigitalKudosWallFrontend"
+  },
+  "provider": {
+    "name": "DigitalKudosWallBackend"
+  },
+  "interactions": [
+    {
+      "description": "a request to register a new user",
+      "providerState": "a user with email pact-test@example.com does not exist",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/users/register",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "pact-test@example.com",
+          "password": "ValidPassword123!"
+        }
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "id": "some-id",
+          "email": "pact-test@example.com"
+        },
+        "matchingRules": {
+          "body": {
+            "$.id": {
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ],
+              "combine": "AND"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "a request to register a user that already exists",
+      "providerState": "a user with email existing@example.com already exists",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/users/register",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "existing@example.com",
+          "password": "ValidPassword123!"
+        }
+      },
+      "response": {
+        "status": 409,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "User with this email already exists"
+        },
+        "matchingRules": {
+          "body": {
+            "$.message": {
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ],
+              "combine": "AND"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

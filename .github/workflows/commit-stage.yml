@@ -42,7 +42,7 @@ jobs:
       - name: Run Component Tests
         run: npm run test:component
 
-      - name: Run Contract Verification Tests
+      - name: Run Contract Tests
         run: npm run test:contract
 
       - name: Run Linting
