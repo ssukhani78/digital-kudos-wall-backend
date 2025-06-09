@@ -148,6 +148,8 @@ This project follows:
 - **Clean Architecture principles**
 - **SOLID principles**
 
+<!-- Triggering CI to re-verify pact -->
+
 ## Links
 
 - [Main Project Repository](https://github.com/chirag1507/digital-kudos-wall)
