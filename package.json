@@ -10,7 +10,7 @@
     "start": "node dist/index.js",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "jest --testPathIgnorePatterns=integration .builder.ts --coverage --watchAll=false",
-    "test:integration": "DATABASE_URL=\"file:./test.db\" jest --testPathPattern=integration",
+    "test:integration": "DATABASE_URL=\"file:./test.db\" npx prisma migrate deploy && DATABASE_URL=\"file:./test.db\" jest --testPathPattern=integration --runInBand",
     "test:component": "jest --testPathPattern=component",
     "test:contract": "jest --testPathPattern=contract --runInBand",
     "lint": "eslint . --ext .ts",

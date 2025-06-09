@@ -34,6 +34,7 @@ export class PrismaUserRepository implements UserRepository {
     const hashedPassword = await user.password.hashPassword();
     const userWithHashedPassword = User.create(
       {
+        name: user.name,
         email: user.email,
         password: hashedPassword,
         isEmailVerified: user.isEmailVerified,

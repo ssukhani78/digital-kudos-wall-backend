@@ -20,6 +20,7 @@ export class UserMapper {
 
     const userSnapshot: UserSnapshot = {
       id: new UniqueEntityID(prismaUser.id),
+      name: prismaUser.name,
       email: emailOrError.getValue(),
       password: passwordOrError.getValue(),
       isEmailVerified: prismaUser.isEmailVerified || false, // Assumes isEmailVerified exists on prismaUser
@@ -40,6 +41,7 @@ export class UserMapper {
   static toPersistence(user: User): Prisma.UserCreateInput {
     return {
       id: user.id.toString(),
+      name: user.name,
       email: user.email.value,
       password: user.password.value,
       isEmailVerified: user.isEmailVerified,
