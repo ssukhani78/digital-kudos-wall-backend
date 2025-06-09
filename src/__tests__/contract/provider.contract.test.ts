@@ -34,34 +34,43 @@ describe("Pact Verification", () => {
     server.close(done);
   });
 
-  describe("for the user registration flow", () => {
-    it("validates the expectations of its consumers", () => {
-      const opts: VerifierOptions = {
-        provider: "DigitalKudosWallBackend",
-        providerBaseUrl: `http://localhost:${port}`,
-        pactBrokerUrl: process.env.PACT_BROKER_BASE_URL,
-        pactBrokerToken: process.env.PACT_BROKER_TOKEN,
-        consumerVersionSelectors: [{ tag: "main", latest: true }],
-        publishVerificationResult: true,
-        providerVersion: process.env.GITHUB_SHA || "1.0.0",
-        logLevel: "info",
-        stateHandlers: {
-          "a user with email pact-test@example.com does not exist": async () => {
-            (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
-            (mockUserRepository.save as jest.Mock).mockImplementation((user: User) => Promise.resolve(user));
-            return Promise.resolve("User does not exist state set up");
-          },
-          "a user with email existing@example.com already exists": async () => {
-            (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue({
-              id: "any-id",
-              email: { value: "existing@example.com" },
-            });
-            return Promise.resolve("User already exists state set up");
-          },
-        },
-      };
+  const brokerUrl = process.env.PACT_BROKER_BASE_URL;
 
-      return new Verifier(opts).verifyProvider();
+  // Only run Pact verification if the broker URL is set
+  if (brokerUrl) {
+    describe("for the user registration flow", () => {
+      it("validates the expectations of its consumers", () => {
+        const opts: VerifierOptions = {
+          provider: "DigitalKudosWallBackend",
+          providerBaseUrl: `http://localhost:${port}`,
+          pactBrokerUrl: brokerUrl,
+          pactBrokerToken: process.env.PACT_BROKER_TOKEN,
+          consumerVersionSelectors: [{ tag: "main", latest: true }],
+          publishVerificationResult: true,
+          providerVersion: process.env.GITHUB_SHA || "1.0.0",
+          logLevel: "info",
+          stateHandlers: {
+            "a user with email pact-test@example.com does not exist": async () => {
+              (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
+              (mockUserRepository.save as jest.Mock).mockImplementation((user: User) => Promise.resolve(user));
+              return Promise.resolve("User does not exist state set up");
+            },
+            "a user with email existing@example.com already exists": async () => {
+              (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue({
+                id: "any-id",
+                email: { value: "existing@example.com" },
+              });
+              return Promise.resolve("User already exists state set up");
+            },
+          },
+        };
+
+        return new Verifier(opts).verifyProvider();
+      });
     });
-  });
+  } else {
+    console.log("Skipping Pact verification. PACT_BROKER_BASE_URL not set.");
+    // This empty test is here to prevent Jest from complaining about no tests in a file.
+    test("skipping pact verification", () => {});
+  }
 });
