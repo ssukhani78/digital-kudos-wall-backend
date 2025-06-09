@@ -149,6 +149,7 @@ This project follows:
 - **SOLID principles**
 
 <!-- Triggering CI to re-verify pact -->
+<!-- Triggering CI to re-verify pact -->
 
 ## Links
 
