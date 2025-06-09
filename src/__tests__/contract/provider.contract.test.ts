@@ -1,6 +1,5 @@
 import { Verifier, VerifierOptions } from "@pact-foundation/pact";
 import { Server } from "http";
-import * as path from "path";
 import { createApp } from "../../app";
 import { RegisterUserUseCase } from "../../modules/user/application/register-user.use-case";
 import { User } from "../../modules/user/domain/user.entity";
@@ -40,15 +39,11 @@ describe("Pact Verification", () => {
       const opts: VerifierOptions = {
         provider: "DigitalKudosWallBackend",
         providerBaseUrl: `http://localhost:${port}`,
-        pactUrls: [
-          path.resolve(
-            process.cwd(),
-            "src",
-            "__tests__",
-            "pacts",
-            "digital-kudos-wall-frontend-digital-kudos-wall-backend.json"
-          ),
-        ],
+        pactBrokerUrl: process.env.PACT_BROKER_BASE_URL,
+        pactBrokerToken: process.env.PACT_BROKER_TOKEN,
+        consumerVersionSelectors: [{ tag: "main", latest: true }],
+        publishVerificationResult: true,
+        providerVersion: process.env.GITHUB_SHA || "1.0.0",
         logLevel: "info",
         stateHandlers: {
           "a user with email pact-test@example.com does not exist": async () => {
