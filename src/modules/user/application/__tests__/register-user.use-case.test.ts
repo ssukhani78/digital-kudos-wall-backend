@@ -29,13 +29,13 @@ describe("RegisterUserUseCase (Sociable Unit Test)", () => {
   describe("execute", () => {
     it("should successfully register a new user", async () => {
       const email = "test@example.com";
-      const password = "ValidPass123!";
+      const password = "ValidPassword123!";
+      const name = "Test User";
 
-      userRepository.findByEmail = jest.fn().mockResolvedValue(null);
-      userRepository.save = jest.fn().mockImplementation((user: User) => Promise.resolve(user));
-      emailService.sendConfirmationEmail = jest.fn().mockResolvedValue(undefined);
+      (userRepository.findByEmail as jest.Mock).mockResolvedValue(null);
+      (userRepository.save as jest.Mock).mockResolvedValue(undefined);
 
-      const result = await useCase.execute({ email, password });
+      const result = await useCase.execute({ name, email, password });
 
       expect(result.isSuccess).toBe(true);
       expect(userRepository.save).toHaveBeenCalled();
@@ -48,13 +48,13 @@ describe("RegisterUserUseCase (Sociable Unit Test)", () => {
 
     it("should return error when user already exists", async () => {
       const email = "existing@example.com";
-      const password = "ValidPass123!";
+      const password = "ValidPassword123!";
+      const name = "Existing User";
 
-      const existingUser = userBuilder.withEmail(email).withPassword(password).build();
-
+      const existingUser = userBuilder.withName(name).withEmail(email).withPassword(password).build();
       (userRepository.findByEmail as jest.Mock).mockResolvedValue(existingUser);
 
-      const result = await useCase.execute({ email, password });
+      const result = await useCase.execute({ name, email, password });
 
       expect(result.isFailure).toBe(true);
       expect(result.error()).toBeInstanceOf(UserAlreadyExistsError);
@@ -63,10 +63,11 @@ describe("RegisterUserUseCase (Sociable Unit Test)", () => {
     });
 
     it("should validate email format", async () => {
-      const invalidEmail = "invalid.email";
-      const password = "ValidPass123!";
+      const email = "invalid-email";
+      const password = "ValidPassword123!";
+      const name = "Test User";
 
-      const result = await useCase.execute({ email: invalidEmail, password });
+      const result = await useCase.execute({ name, email, password });
 
       expect(result.isFailure).toBe(true);
       expect(result.error()).toContain("Invalid email format");
@@ -76,9 +77,10 @@ describe("RegisterUserUseCase (Sociable Unit Test)", () => {
 
     it("should validate password requirements", async () => {
       const email = "test@example.com";
-      const invalidPassword = "weak";
+      const password = "weak";
+      const name = "Test User";
 
-      const result = await useCase.execute({ email, password: invalidPassword });
+      const result = await useCase.execute({ name, email, password });
 
       expect(result.isFailure).toBe(true);
       expect(result.error()).toContain("Password must");

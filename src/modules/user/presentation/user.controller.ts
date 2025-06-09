@@ -14,6 +14,7 @@ export class UserController {
       const user = result.getValue();
       res.status(201).json({
         id: user.id.toString(),
+        name: user.name,
         email: user.email.value,
       });
     } else {

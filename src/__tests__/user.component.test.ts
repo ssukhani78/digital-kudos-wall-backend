@@ -26,6 +26,7 @@ describe("User Component Tests", () => {
       const app = createApp({ registerUserUseCase });
 
       const requestBody = {
+        name: "Test User",
         email: "test@example.com",
         password: "ValidPassword123!",
       };
@@ -37,6 +38,7 @@ describe("User Component Tests", () => {
 
       expect(response.body).toEqual({
         id: expect.any(String),
+        name: requestBody.name,
         email: requestBody.email,
       });
       expect(mockUserRepository.save).toHaveBeenCalled();
@@ -48,6 +50,7 @@ describe("User Component Tests", () => {
       const app = createApp({ registerUserUseCase });
 
       const requestBody = {
+        name: "Existing User",
         email: "existing@example.com",
         password: "ValidPassword123!",
       };
@@ -66,6 +69,7 @@ describe("User Component Tests", () => {
       const app = createApp({ registerUserUseCase });
 
       const requestBody = {
+        name: "Test User",
         email: "test@example.com",
         password: "weak",
       };

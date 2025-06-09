@@ -50,6 +50,12 @@ jobs:
       - name: Run Component Tests
         run: npm run test:component
 
+      - name: Run Contract Tests
+        run: npm run test:contract
+        env:
+          PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+          PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+
       - name: Run Linting
         run: npm run lint
 

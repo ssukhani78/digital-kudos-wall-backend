@@ -8,6 +8,7 @@ import { Password } from "../domain/value-objects/password";
 import { UserAlreadyExistsError } from "../domain/errors/user-already-exists.error";
 
 export interface RegisterUserDTO {
+  name: string;
   email: string;
   password: string;
 }
@@ -18,8 +19,8 @@ export class RegisterUserUseCase implements UseCase<RegisterUserDTO, RegisterUse
   constructor(private readonly userRepository: UserRepository, private readonly emailService: EmailService) {}
 
   async execute(request: RegisterUserDTO): Promise<RegisterUserResponse> {
-    if (!request.email || !request.password) {
-      return Result.fail("Email and password are required.");
+    if (!request.name || !request.email || !request.password) {
+      return Result.fail("Name, email and password are required.");
     }
 
     const emailOrError = Email.create(request.email);
@@ -43,6 +44,7 @@ export class RegisterUserUseCase implements UseCase<RegisterUserDTO, RegisterUse
     }
 
     const userOrError = User.create({
+      name: request.name,
       email,
       password,
       isEmailVerified: false,

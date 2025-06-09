@@ -5,6 +5,7 @@ import { Email } from "./value-objects/email";
 import { Password } from "./value-objects/password";
 
 export interface UserProps {
+  name: string;
   email: Email;
   password: Password;
   isEmailVerified: boolean;
@@ -19,6 +20,10 @@ export interface UserSnapshot extends UserProps {
 export class User extends Entity<UserProps> {
   private constructor(props: UserProps, id?: UniqueEntityID) {
     super(props, id);
+  }
+
+  get name(): string {
+    return this.props.name;
   }
 
   get email(): Email {
@@ -45,6 +50,7 @@ export class User extends Entity<UserProps> {
   public static reconstitute(snapshot: UserSnapshot): Result<User, string> {
     const user = new User(
       {
+        name: snapshot.name,
         email: snapshot.email,
         password: snapshot.password,
         isEmailVerified: snapshot.isEmailVerified,
