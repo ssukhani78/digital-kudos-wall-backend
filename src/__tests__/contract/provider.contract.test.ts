@@ -1,10 +1,11 @@
 import { Verifier, VerifierOptions } from "@pact-foundation/pact";
 import { Server } from "http";
-import { createApp } from "../../app";
 import { RegisterUserUseCase } from "../../modules/user/application/register-user.use-case";
 import { User } from "../../modules/user/domain/user.entity";
 import { EmailService } from "../../modules/user/domain/email.service";
 import { UserRepository } from "../../modules/user/domain/user.repository";
+import setupUserRoutes from "../../modules/user/presentation/user.routes";
+import express from "express";
 
 describe("Pact Verification", () => {
   let server: Server;
@@ -21,7 +22,13 @@ describe("Pact Verification", () => {
   };
 
   const registerUserUseCase = new RegisterUserUseCase(mockUserRepository, mockEmailService);
-  const app = createApp({ registerUserUseCase });
+
+  // We create a slimmed down version of the app, only mounting the routes
+  // we need for the contract tests.
+  const app = express();
+  app.use(express.json());
+  const userRoutes = setupUserRoutes(registerUserUseCase);
+  app.use("/users", userRoutes);
 
   beforeAll((done) => {
     server = app.listen(port, () => {
