@@ -33,6 +33,14 @@ jobs:
       - name: Run Unit Tests
         run: npm run test:unit -- --coverage --watchAll=false
 
+      - name: Run Provider Contract Verification
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npm run test:contract
+        env:
+          PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+          PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+          GITHUB_SHA: ${{ github.sha }}
+
       - name: Prepare Test Database for Integration Tests
         run: DATABASE_URL="file:./test.db" npx prisma migrate deploy
 
@@ -41,9 +49,6 @@ jobs:
 
       - name: Run Component Tests
         run: npm run test:component
-
-      - name: Run Contract Tests
-        run: npm run test:contract
 
       - name: Run Linting
         run: npm run lint

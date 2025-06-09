@@ -9,13 +9,14 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "jest --testPathIgnorePatterns=integration .builder.ts",
+    "test:unit": "jest --testPathIgnorePatterns=integration .builder.ts --coverage --watchAll=false",
     "test:integration": "DATABASE_URL=\"file:./test.db\" jest --testPathPattern=integration",
     "test:component": "jest --testPathPattern=component",
-    "test:contract": "jest --testPathPattern=contract",
+    "test:contract": "jest --testPathPattern=contract --runInBand",
     "lint": "eslint . --ext .ts",
     "lint:check": "eslint . --ext .ts --quiet",
-    "prettier": "prettier --write ."
+    "prettier": "prettier --write .",
+    "lint:fix": "eslint . --ext .ts --fix"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",
