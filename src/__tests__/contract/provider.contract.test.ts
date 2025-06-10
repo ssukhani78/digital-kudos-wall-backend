@@ -47,12 +47,13 @@ describe("Pact Verification", () => {
   if (brokerUrl) {
     describe("for the user registration flow", () => {
       it("validates the expectations of its consumers", () => {
+        const pactUrl = process.env.PACT_URL;
+
         const opts: VerifierOptions = {
           provider: "DigitalKudosWallBackend",
           providerBaseUrl: `http://localhost:${port}`,
           pactBrokerUrl: brokerUrl,
           pactBrokerToken: process.env.PACT_BROKER_TOKEN,
-          consumerVersionSelectors: [{ tag: "main", latest: true }],
           publishVerificationResult: true,
           providerVersion: process.env.GITHUB_SHA || "1.0.0",
           logLevel: "info",
@@ -71,6 +72,12 @@ describe("Pact Verification", () => {
             },
           },
         };
+
+        if (pactUrl) {
+          opts.pactUrls = [pactUrl];
+        } else {
+          opts.consumerVersionSelectors = [{ tag: "main", latest: true }];
+        }
 
         return new Verifier(opts).verifyProvider();
       });
