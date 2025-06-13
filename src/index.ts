@@ -3,7 +3,7 @@ import { createApp } from "./app";
 import { RegisterUserUseCase } from "./modules/user/application/register-user.use-case";
 import { PrismaUserRepository } from "./modules/user/infrastructure/persistence/prisma/prisma-user.repository";
 import { NodemailerEmailService } from "./modules/user/infrastructure/services/nodemailer-email.service";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "./shared/infrastructure/persistence/prisma/client";
 
 // Load environment variables
 dotenv.config();
@@ -13,7 +13,6 @@ const PORT = process.env.PORT || 3001;
 async function startServer(): Promise<void> {
   try {
     // Infrastructure
-    const prisma = new PrismaClient();
     const userRepository = new PrismaUserRepository(prisma);
     const emailService = new NodemailerEmailService();
 

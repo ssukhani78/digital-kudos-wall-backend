@@ -24,10 +24,9 @@ export class Password extends ValueObject<PasswordProps> {
   }
 
   public static create(password: string): Result<Password> {
-    if (!this.isValidPassword(password)) {
-      return Result.fail<Password>(
-        "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number and one special character"
-      );
+    const validationError = this.getValidationError(password);
+    if (validationError) {
+      return Result.fail<Password>(validationError);
     }
 
     return Result.ok(new Password({ value: password, hashed: false }));
@@ -37,14 +36,24 @@ export class Password extends ValueObject<PasswordProps> {
     return Result.ok(new Password({ value: hashedPassword, hashed: true }));
   }
 
-  private static isValidPassword(password: string): boolean {
-    const minLength = 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  private static getValidationError(password: string): string | null {
+    if (password.length < 8) {
+      return "Password must be at least 8 characters long";
+    }
 
-    return password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
+    if (!/\d/.test(password)) {
+      return "Password must contain at least one number";
+    }
+
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      return "Password must contain at least one special character";
+    }
+
+    return null; // No validation errors
+  }
+
+  private static isValidPassword(password: string): boolean {
+    return this.getValidationError(password) === null;
   }
 
   public async hashPassword(): Promise<Password> {

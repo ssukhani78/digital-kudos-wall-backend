@@ -50,4 +50,8 @@ export class PrismaUserRepository implements UserRepository {
       create: data,
     });
   }
+
+  async deleteAll(): Promise<void> {
+    await this.prisma.user.deleteMany({});
+  }
 }

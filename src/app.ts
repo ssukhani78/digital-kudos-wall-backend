@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import setupUserRoutes from "./modules/user/presentation/user.routes";
 import { RegisterUserUseCase } from "./modules/user/application/register-user.use-case";
+import { testSupportRouter } from "./modules/test-support/http/test-support.routes";
 
 interface AppDependencies {
   registerUserUseCase: RegisterUserUseCase;
@@ -23,6 +24,12 @@ export function createApp(dependencies: AppDependencies): Application {
 
   const userRoutes = setupUserRoutes(dependencies.registerUserUseCase);
   app.use("/api/v1/users", userRoutes);
+
+  // Conditionally add test-support routes
+  // This is a critical step to ensure test-only endpoints are not available in production
+  if (process.env.NODE_ENV === "test") {
+    app.use("/api/v1/test-support", testSupportRouter);
+  }
 
   app.get("/health", (req: Request, res: Response) => {
     res.status(200).json({
