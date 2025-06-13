@@ -13,6 +13,7 @@ describe("Kudos Component Tests", () => {
       findByEmail: jest.fn(),
       findById: jest.fn(),
       save: jest.fn(),
+      deleteAll: jest.fn(),
     };
 
     mockEmailService = {

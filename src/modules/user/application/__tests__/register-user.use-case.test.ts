@@ -16,6 +16,7 @@ describe("RegisterUserUseCase (Sociable Unit Test)", () => {
       findByEmail: jest.fn(),
       save: jest.fn(),
       findById: jest.fn(),
+      deleteAll: jest.fn(),
     };
 
     emailService = {

@@ -15,6 +15,7 @@ describe("Pact Verification", () => {
     findByEmail: jest.fn(),
     findById: jest.fn(),
     save: jest.fn(),
+    deleteAll: jest.fn(),
   };
 
   const mockEmailService: EmailService = {
