@@ -27,7 +27,7 @@ export function createApp(dependencies: AppDependencies): Application {
 
   // Conditionally add test-support routes
   // This is a critical step to ensure test-only endpoints are not available in production
-  if (process.env.NODE_ENV === "test") {
+  if (process.env.NODE_ENV === "test" || process.env.NODE_ENV === "uat") {
     app.use("/api/v1/test-support", testSupportRouter);
   }
 
