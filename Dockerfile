@@ -25,31 +25,33 @@ RUN apk add --no-cache curl
 # Set working directory
 WORKDIR /app
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S node -u 1001 -G nodejs && \
-    mkdir -p /home/node/.config/prisma-nodejs && \
-    chown -R node:nodejs /home/node
+# Set up Prisma directory and permissions
+RUN mkdir -p /home/node/.config/prisma-nodejs && \
+    chown -R node:node /home/node
 
 # Copy package files
 COPY package*.json ./
 
-# Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install only production dependencies and set permissions
+RUN npm ci --only=production && \
+    npm cache clean --force && \
+    chown -R node:node /app/node_modules
 
 # Copy Prisma schema and migrations
-COPY --chown=node:nodejs prisma/schema.prisma prisma/
-COPY --chown=node:nodejs prisma/migrations prisma/migrations/
+COPY --chown=node:node prisma/schema.prisma prisma/
+COPY --chown=node:node prisma/migrations prisma/migrations/
+
+# Switch to node user for Prisma operations
+USER node
 
 # Generate Prisma client
-USER node
 RUN npx prisma generate
 
 # Copy built application from builder stage
-COPY --from=builder --chown=node:nodejs /app/dist ./dist
+COPY --from=builder --chown=node:node /app/dist ./dist
 
 # Create data directory and set permissions
-RUN mkdir -p /app/prisma && chown -R node:nodejs /app
+RUN mkdir -p /app/prisma
 
 # Expose port
 EXPOSE 3001
