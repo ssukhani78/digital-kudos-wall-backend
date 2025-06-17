@@ -10,14 +10,17 @@ COPY package*.json ./
 # Install ALL dependencies (including devDependencies) for building
 RUN npm ci
 
-# Copy source code
+# Copy source code and Prisma files
 COPY . .
 
-# Build the application
-RUN npm run build
+# Generate Prisma client and build the application
+RUN npx prisma generate && npm run build
 
 # Production stage
 FROM node:18-alpine AS production
+
+# Install curl for healthcheck
+RUN apk add --no-cache curl
 
 # Set working directory
 WORKDIR /app
@@ -32,11 +35,18 @@ COPY package*.json ./
 # Install only production dependencies
 RUN npm ci --only=production && npm cache clean --force
 
+# Copy Prisma schema and migrations
+COPY --chown=backend:nodejs prisma/schema.prisma prisma/
+COPY --chown=backend:nodejs prisma/migrations prisma/migrations/
+
+# Generate Prisma client
+RUN npx prisma generate
+
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Change ownership to non-root user
-RUN chown -R backend:nodejs /app
+# Create data directory and set permissions
+RUN mkdir -p /app/prisma && chown -R backend:nodejs /app
 USER backend
 
 # Expose port
@@ -44,7 +54,7 @@ EXPOSE 3001
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3001/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+  CMD curl -f http://localhost:3001/health || exit 1
 
 # Start the application
 CMD ["node", "dist/index.js"] 
