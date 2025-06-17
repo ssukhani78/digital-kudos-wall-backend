@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Node.js Express backend API for Digital Kudos Wall",
   "main": "dist/index.js",
-  "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start:test": "NODE_ENV=test tsx watch src/index.ts",
