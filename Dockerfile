@@ -27,7 +27,9 @@ WORKDIR /app
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S backend -u 1001
+    adduser -S node -u 1001 -G nodejs && \
+    mkdir -p /home/node/.config/prisma-nodejs && \
+    chown -R node:nodejs /home/node
 
 # Copy package files
 COPY package*.json ./
@@ -36,18 +38,18 @@ COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 # Copy Prisma schema and migrations
-COPY --chown=backend:nodejs prisma/schema.prisma prisma/
-COPY --chown=backend:nodejs prisma/migrations prisma/migrations/
+COPY --chown=node:nodejs prisma/schema.prisma prisma/
+COPY --chown=node:nodejs prisma/migrations prisma/migrations/
 
 # Generate Prisma client
+USER node
 RUN npx prisma generate
 
 # Copy built application from builder stage
-COPY --from=builder /app/dist ./dist
+COPY --from=builder --chown=node:nodejs /app/dist ./dist
 
 # Create data directory and set permissions
-RUN mkdir -p /app/prisma && chown -R backend:nodejs /app
-USER backend
+RUN mkdir -p /app/prisma && chown -R node:nodejs /app
 
 # Expose port
 EXPOSE 3001
