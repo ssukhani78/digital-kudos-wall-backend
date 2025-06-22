@@ -11,7 +11,7 @@
       "providerState": "a user with email pact-test@example.com does not exist",
       "request": {
         "method": "POST",
-        "path": "/api/v1/users/register",
+        "path": "/users/register",
         "headers": {
           "Content-Type": "application/json"
         },
@@ -48,7 +48,7 @@
       "providerState": "a user with email existing@example.com already exists",
       "request": {
         "method": "POST",
-        "path": "/api/v1/users/register",
+        "path": "/users/register",
         "headers": {
           "Content-Type": "application/json"
         },
