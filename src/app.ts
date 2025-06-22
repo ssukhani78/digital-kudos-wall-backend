@@ -12,9 +12,28 @@ interface AppDependencies {
 export function createApp(dependencies: AppDependencies): Application {
   const app = express();
   app.use(helmet());
+
+  // Configure CORS based on environment
+  const allowedOrigins = [process.env.FRONTEND_URL || "http://localhost:3000"];
+
+  // In UAT, also allow the IP-based access
+  if (process.env.NODE_ENV === "uat") {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrlObj = new URL(frontendUrl);
+    // Add IP-based origin if FRONTEND_URL is hostname-based, and vice versa
+    if (frontendUrlObj.hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+      // If FRONTEND_URL is IP-based, also allow hostname-based
+      allowedOrigins.push("http://uat.digital-kudos-wall.com:3000");
+    } else {
+      // If FRONTEND_URL is hostname-based, also allow IP-based
+      const ipBasedUrl = frontendUrl.replace(frontendUrlObj.hostname, "13.201.16.118");
+      allowedOrigins.push(ipBasedUrl);
+    }
+  }
+
   app.use(
     cors({
-      origin: process.env.FRONTEND_URL || "http://localhost:3000",
+      origin: allowedOrigins,
       credentials: true,
     })
   );
