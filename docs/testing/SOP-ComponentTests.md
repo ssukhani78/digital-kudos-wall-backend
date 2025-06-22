@@ -45,7 +45,7 @@ These tests align with the "Component Tests" category in the Modern Test Pyramid
 
   ```typescript
   // Example for the RegisterUser endpoint
-  describe("POST /api/v1/users/register", () => {
+  describe("POST /users/register", () => {
     it("should return 201 when user is successfully registered", async () => {
       // Arrange
       // 1. Create mock dependencies
@@ -69,7 +69,7 @@ These tests align with the "Component Tests" category in the Modern Test Pyramid
 
       // Act
       // 5. Make a real HTTP request to the test app instance
-      const response = await request(app).post("/api/v1/users/register").send(requestBody).expect(201);
+      const response = await request(app).post("/users/register").send(requestBody).expect(201);
 
       // Assert
       // 6. Verify the HTTP response and any interactions with mocks

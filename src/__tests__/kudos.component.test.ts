@@ -21,12 +21,12 @@ describe("Kudos Component Tests", () => {
     };
   });
 
-  describe("GET /api/v1/kudos", () => {
+  describe("GET /kudos", () => {
     test("should return empty kudos list", async () => {
       const app = createApp({
         registerUserUseCase: new RegisterUserUseCase(mockUserRepository, mockEmailService),
       });
-      const response = await request(app).get("/api/v1/kudos").expect(200);
+      const response = await request(app).get("/kudos").expect(200);
 
       expect(response.body).toEqual({
         message: "Digital Kudos Wall API - MVP Version",

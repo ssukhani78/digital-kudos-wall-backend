@@ -21,7 +21,7 @@ describe("User Component Tests", () => {
     };
   });
 
-  describe("POST /api/v1/users/register", () => {
+  describe("POST /users/register", () => {
     it("should return 201 when user is successfully registered", async () => {
       const registerUserUseCase = new RegisterUserUseCase(mockUserRepository, mockEmailService);
       const app = createApp({ registerUserUseCase });
@@ -35,7 +35,7 @@ describe("User Component Tests", () => {
       (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
       (mockUserRepository.save as jest.Mock).mockResolvedValue(undefined);
 
-      const response = await request(app).post("/api/v1/users/register").send(requestBody).expect(201);
+      const response = await request(app).post("/users/register").send(requestBody).expect(201);
 
       expect(response.body).toEqual({
         id: expect.any(String),
@@ -58,7 +58,7 @@ describe("User Component Tests", () => {
 
       (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue({ id: "any-id" });
 
-      const response = await request(app).post("/api/v1/users/register").send(requestBody).expect(409);
+      const response = await request(app).post("/users/register").send(requestBody).expect(409);
 
       expect(response.body.message).toContain("User with this email already exists");
       expect(mockUserRepository.save).not.toHaveBeenCalled();
@@ -77,7 +77,7 @@ describe("User Component Tests", () => {
 
       (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
 
-      const response = await request(app).post("/api/v1/users/register").send(requestBody).expect(400);
+      const response = await request(app).post("/users/register").send(requestBody).expect(400);
 
       expect(response.body.message).toContain("Password must be at least 8 characters long");
       expect(mockUserRepository.save).not.toHaveBeenCalled();

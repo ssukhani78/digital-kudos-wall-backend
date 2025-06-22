@@ -33,7 +33,7 @@ describe("App Component Tests", () => {
         version: "1.0.0",
         endpoints: {
           health: "/health",
-          kudos: "/api/v1/kudos",
+          kudos: "/kudos",
         },
       });
     });
