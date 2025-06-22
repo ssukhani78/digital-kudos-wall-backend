@@ -29,7 +29,7 @@ describe("Pact Verification", () => {
   const app = express();
   app.use(express.json());
   const userRoutes = setupUserRoutes(registerUserUseCase);
-  app.use("/api/v1/users", userRoutes);
+  app.use("/users", userRoutes);
 
   beforeAll((done) => {
     server = app.listen(port, () => {

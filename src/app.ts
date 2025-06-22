@@ -23,12 +23,12 @@ export function createApp(dependencies: AppDependencies): Application {
   app.use(express.urlencoded({ extended: true }));
 
   const userRoutes = setupUserRoutes(dependencies.registerUserUseCase);
-  app.use("/api/v1/users", userRoutes);
+  app.use("/users", userRoutes);
 
   // Conditionally add test-support routes
   // This is a critical step to ensure test-only endpoints are not available in production
   if (process.env.NODE_ENV === "test" || process.env.NODE_ENV === "uat") {
-    app.use("/api/v1/test-support", testSupportRouter);
+    app.use("/test-support", testSupportRouter);
   }
 
   app.get("/health", (req: Request, res: Response) => {
@@ -40,7 +40,7 @@ export function createApp(dependencies: AppDependencies): Application {
     });
   });
 
-  app.get("/api/v1/kudos", (req: Request, res: Response) => {
+  app.get("/kudos", (req: Request, res: Response) => {
     res.status(200).json({
       message: "Digital Kudos Wall API - MVP Version",
       kudos: [],
@@ -58,7 +58,7 @@ export function createApp(dependencies: AppDependencies): Application {
       version: "1.0.0",
       endpoints: {
         health: "/health",
-        kudos: "/api/v1/kudos",
+        kudos: "/kudos",
       },
     });
   });
