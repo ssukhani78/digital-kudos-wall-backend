@@ -1,12 +1,14 @@
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
-import setupUserRoutes from "./modules/user/presentation/user.routes";
-import { RegisterUserUseCase } from "./modules/user/application/register-user.use-case";
+import setupUserRoutes from "./modules/user/presentation/routes/user.routes";
+import { RegisterUserUseCase } from "./modules/user/application/use-cases/register-user/register-user.use-case";
+import { LoginUseCase } from "./modules/user/application/use-cases/login/login.use-case";
 import { testSupportRouter } from "./modules/test-support/http/test-support.routes";
 
-interface AppDependencies {
+export interface AppDependencies {
   registerUserUseCase: RegisterUserUseCase;
+  loginUseCase: LoginUseCase;
 }
 
 export function createApp(dependencies: AppDependencies): Application {
@@ -41,7 +43,10 @@ export function createApp(dependencies: AppDependencies): Application {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  const userRoutes = setupUserRoutes(dependencies.registerUserUseCase);
+  const userRoutes = setupUserRoutes({
+    registerUserUseCase: dependencies.registerUserUseCase,
+    loginUseCase: dependencies.loginUseCase,
+  });
   app.use("/users", userRoutes);
 
   // Conditionally add test-support routes

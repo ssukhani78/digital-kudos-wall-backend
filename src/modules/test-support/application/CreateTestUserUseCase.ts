@@ -1,6 +1,6 @@
 import { UserRepository } from "../../user/domain/user.repository";
 import { User } from "../../user/domain/user.entity";
-import { RegisterUserDTO } from "../../user/application/register-user.use-case";
+import { RegisterUserDTO } from "../../user/application/use-cases/register-user/register-user.use-case";
 import { Email } from "../../user/domain/value-objects/email";
 import { Password } from "../../user/domain/value-objects/password";
 

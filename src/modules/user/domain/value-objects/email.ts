@@ -14,9 +14,13 @@ export class Email extends ValueObject<EmailProps> {
     return this.props.value;
   }
 
-  public static create(email: string): Result<Email> {
+  public static create(email: string): Result<Email, string> {
+    if (!email) {
+      return Result.fail("Email is required");
+    }
+
     if (!this.isValidEmail(email)) {
-      return Result.fail<Email>("Invalid email format");
+      return Result.fail("Invalid email format");
     }
 
     return Result.ok(new Email({ value: email }));

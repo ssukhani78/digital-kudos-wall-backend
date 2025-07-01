@@ -1,8 +1,9 @@
 import request from "supertest";
-import { createApp } from "../app";
-import { RegisterUserUseCase } from "../modules/user/application/register-user.use-case";
-import { UserRepository } from "../modules/user/domain/user.repository";
-import { EmailService } from "../modules/user/domain/email.service";
+import { createApp } from "../../app";
+import { RegisterUserUseCase } from "../../modules/user/application/use-cases/register-user/register-user.use-case";
+import { UserRepository } from "../../modules/user/domain/user.repository";
+import { EmailService } from "../../modules/user/domain/email.service";
+import { LoginUseCase } from "../../modules/user/application/use-cases/login/login.use-case";
 
 describe("App Component Tests", () => {
   let mockUserRepository: UserRepository;
@@ -25,6 +26,7 @@ describe("App Component Tests", () => {
     test("should return welcome message", async () => {
       const app = createApp({
         registerUserUseCase: new RegisterUserUseCase(mockUserRepository, mockEmailService),
+        loginUseCase: new LoginUseCase(mockUserRepository),
       });
       const response = await request(app).get("/").expect(200);
 
@@ -43,6 +45,7 @@ describe("App Component Tests", () => {
     test("should return health status", async () => {
       const app = createApp({
         registerUserUseCase: new RegisterUserUseCase(mockUserRepository, mockEmailService),
+        loginUseCase: new LoginUseCase(mockUserRepository),
       });
       const response = await request(app).get("/health").expect(200);
 
@@ -59,6 +62,7 @@ describe("App Component Tests", () => {
     test("should return 404 for unknown routes", async () => {
       const app = createApp({
         registerUserUseCase: new RegisterUserUseCase(mockUserRepository, mockEmailService),
+        loginUseCase: new LoginUseCase(mockUserRepository),
       });
       const response = await request(app).get("/nonexistent").expect(404);
 

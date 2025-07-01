@@ -1,8 +1,9 @@
 import request from "supertest";
-import { createApp } from "../app";
-import { RegisterUserUseCase } from "../modules/user/application/register-user.use-case";
-import { UserRepository } from "../modules/user/domain/user.repository";
-import { EmailService } from "../modules/user/domain/email.service";
+import { createApp } from "../../app";
+import { RegisterUserUseCase } from "../../modules/user/application/use-cases/register-user/register-user.use-case";
+import { UserRepository } from "../../modules/user/domain/user.repository";
+import { EmailService } from "../../modules/user/domain/email.service";
+import { LoginUseCase } from "../../modules/user/application/use-cases/login/login.use-case";
 
 describe("User Component Tests", () => {
   let mockUserRepository: UserRepository;
@@ -24,7 +25,7 @@ describe("User Component Tests", () => {
   describe("POST /users/register", () => {
     it("should return 201 when user is successfully registered", async () => {
       const registerUserUseCase = new RegisterUserUseCase(mockUserRepository, mockEmailService);
-      const app = createApp({ registerUserUseCase });
+      const app = createApp({ registerUserUseCase, loginUseCase: new LoginUseCase(mockUserRepository) });
 
       const requestBody = {
         name: "Test User",
@@ -48,7 +49,7 @@ describe("User Component Tests", () => {
 
     it("should return 409 Conflict when user already exists", async () => {
       const registerUserUseCase = new RegisterUserUseCase(mockUserRepository, mockEmailService);
-      const app = createApp({ registerUserUseCase });
+      const app = createApp({ registerUserUseCase, loginUseCase: new LoginUseCase(mockUserRepository) });
 
       const requestBody = {
         name: "Existing User",
@@ -67,7 +68,7 @@ describe("User Component Tests", () => {
 
     it("should return 400 Bad Request for invalid input (e.g., weak password)", async () => {
       const registerUserUseCase = new RegisterUserUseCase(mockUserRepository, mockEmailService);
-      const app = createApp({ registerUserUseCase });
+      const app = createApp({ registerUserUseCase, loginUseCase: new LoginUseCase(mockUserRepository) });
 
       const requestBody = {
         name: "Test User",

@@ -1,11 +1,12 @@
-import { UseCase } from "../../../shared/core/use-case";
-import { Result } from "../../../shared/core/result";
-import { User } from "../domain/user.entity";
-import { UserRepository } from "../domain/user.repository";
-import { EmailService } from "../domain/email.service";
-import { Email } from "../domain/value-objects/email";
-import { Password } from "../domain/value-objects/password";
-import { UserAlreadyExistsError } from "../domain/errors/user-already-exists.error";
+import { UseCase } from "../../../../../shared/core/use-case";
+import { Result } from "../../../../../shared/core/result";
+import { User } from "../../../domain/user.entity";
+import { UserRepository } from "../../../domain/user.repository";
+import { EmailService } from "../../../domain/email.service";
+import { Email } from "../../../domain/value-objects/email";
+import { Password } from "../../../domain/value-objects/password";
+import { UserAlreadyExistsError } from "../../../domain/errors/user-already-exists.error";
+import { ValidationError } from "../../../domain/errors/validation.error";
 
 export interface RegisterUserDTO {
   name: string;
@@ -13,25 +14,25 @@ export interface RegisterUserDTO {
   password: string;
 }
 
-export type RegisterUserResponse = Result<User, string | UserAlreadyExistsError>;
+export type RegisterUserResponse = Result<User, string | UserAlreadyExistsError | ValidationError>;
 
 export class RegisterUserUseCase implements UseCase<RegisterUserDTO, RegisterUserResponse> {
   constructor(private readonly userRepository: UserRepository, private readonly emailService: EmailService) {}
 
   async execute(request: RegisterUserDTO): Promise<RegisterUserResponse> {
-    if (!request.name || !request.email || !request.password) {
-      return Result.fail("Name, email and password are required.");
+    if (!request.name) {
+      return Result.fail(new ValidationError("Name is required."));
     }
 
     const emailOrError = Email.create(request.email);
     const passwordOrError = Password.create(request.password);
 
     if (emailOrError.isFailure) {
-      return Result.fail(emailOrError.error());
+      return Result.fail(new ValidationError(emailOrError.error()));
     }
 
     if (passwordOrError.isFailure) {
-      return Result.fail(passwordOrError.error());
+      return Result.fail(new ValidationError(passwordOrError.error()));
     }
 
     const email = emailOrError.getValue();

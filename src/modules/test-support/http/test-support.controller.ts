@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { CreateTestUserUseCase } from "../application/CreateTestUserUseCase";
 import { CleanupTestDataUseCase } from "../application/CleanupTestDataUseCase";
-import { RegisterUserDTO } from "../../user/application/register-user.use-case";
+import { RegisterUserDTO } from "../../user/application/use-cases/register-user/register-user.use-case";
 
 export class TestSupportController {
   constructor(

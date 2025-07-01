@@ -1,10 +1,11 @@
 import { ValueObject } from "../../../../shared/domain/value-object";
 import { Result } from "../../../../shared/core/result";
-import * as bcrypt from "bcrypt";
+import bcrypt from "bcrypt";
+import { ValidationError } from "../errors/validation.error";
 
 interface PasswordProps {
   value: string;
-  hashed?: boolean;
+  hashed: boolean;
 }
 
 export class Password extends ValueObject<PasswordProps> {
@@ -20,19 +21,24 @@ export class Password extends ValueObject<PasswordProps> {
     if (this.props.hashed) {
       return await bcrypt.compare(plainTextPassword, this.props.value);
     }
+
     return this.props.value === plainTextPassword;
   }
 
-  public static create(password: string): Result<Password> {
+  public static create(password: string): Result<Password, string> {
+    if (!password) {
+      return Result.fail("Password is required");
+    }
+
     const validationError = this.getValidationError(password);
     if (validationError) {
-      return Result.fail<Password>(validationError);
+      return Result.fail(validationError);
     }
 
     return Result.ok(new Password({ value: password, hashed: false }));
   }
 
-  public static createHashed(hashedPassword: string): Result<Password> {
+  public static createHashed(hashedPassword: string): Result<Password, ValidationError> {
     return Result.ok(new Password({ value: hashedPassword, hashed: true }));
   }
 
@@ -49,11 +55,7 @@ export class Password extends ValueObject<PasswordProps> {
       return "Password must contain at least one special character";
     }
 
-    return null; // No validation errors
-  }
-
-  private static isValidPassword(password: string): boolean {
-    return this.getValidationError(password) === null;
+    return null;
   }
 
   public async hashPassword(): Promise<Password> {
@@ -65,10 +67,11 @@ export class Password extends ValueObject<PasswordProps> {
     return Password.createHashed(hashedPassword).getValue();
   }
 
-  public static reconstitute(hashedPassword: string): Result<Password, string> {
+  public static reconstitute(hashedPassword: string): Result<Password, ValidationError> {
     if (!hashedPassword || hashedPassword.length === 0) {
-      return Result.fail<Password>("Stored password cannot be empty.");
+      return Result.fail(new ValidationError("Stored password cannot be empty."));
     }
-    return Result.ok<Password>(new Password({ value: hashedPassword, hashed: true }));
+
+    return Result.ok<Password, ValidationError>(new Password({ value: hashedPassword, hashed: true }));
   }
 }
