@@ -29,8 +29,6 @@ describe("Pact Verification", () => {
   const registerUserUseCase = new RegisterUserUseCase(mockUserRepository, mockEmailService);
   const loginUseCase = new LoginUseCase(mockUserRepository);
 
-  // We create a slimmed down version of the app, only mounting the routes
-  // we need for the contract tests.
   const app = express();
   app.use(express.json());
   const userRoutes = setupUserRoutes({ registerUserUseCase, loginUseCase });
@@ -47,75 +45,83 @@ describe("Pact Verification", () => {
     server.close(done);
   });
 
-  const brokerUrl = process.env.PACT_BROKER_BASE_URL;
+  const pactBrokerUrl = process.env.PACT_BROKER_BASE_URL;
+  const pactBrokerToken = process.env.PACT_BROKER_TOKEN;
+  const pactUrl = process.env.PACT_URL;
+  const gitSha = process.env.GITHUB_SHA || process.env.GIT_COMMIT || "local";
+  const branch = process.env.GITHUB_REF_NAME || process.env.GIT_BRANCH || "main";
 
-  // Only run Pact verification if the broker URL is set
-  if (brokerUrl) {
-    describe("for the user registration and login flows", () => {
-      it("validates the expectations of its consumers", () => {
-        const pactUrl = process.env.PACT_URL;
-
-        const opts: VerifierOptions = {
-          provider: "DigitalKudosWallBackend",
-          providerBaseUrl: `http://localhost:${port}`,
-          pactBrokerUrl: brokerUrl,
-          pactBrokerToken: process.env.PACT_BROKER_TOKEN,
-          publishVerificationResult: true,
-          providerVersion: process.env.GITHUB_SHA || "1.0.0",
-          logLevel: "info",
-          stateHandlers: {
-            "a user with email pact-test@example.com does not exist": async () => {
-              (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
-              (mockUserRepository.save as jest.Mock).mockImplementation((user: User) => Promise.resolve(user));
-              return Promise.resolve("User does not exist state set up");
-            },
-            "a user with email existing@example.com already exists": async () => {
-              (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue({
-                id: "any-id",
-                email: { value: "existing@example.com" },
-              });
-              return Promise.resolve("User already exists state set up");
-            },
-            "a user exists with email pact-test@example.com": async () => {
-              const hashedPasswordResult = await Password.create("ValidPassword123!");
-              const emailResult = Email.create("pact-test@example.com");
-
-              if (hashedPasswordResult.isFailure || emailResult.isFailure) {
-                throw new Error("Failed to create test user credentials");
-              }
-
-              const existingUser = User.create(
-                {
-                  name: "pact-test-user",
-                  email: emailResult.getValue(),
-                  password: hashedPasswordResult.getValue(),
-                  isEmailVerified: false,
-                },
-                new UniqueEntityID("some-id")
-              );
-
-              if (existingUser.isFailure) {
-                throw new Error("Failed to create test user");
-              }
-
-              (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(existingUser.getValue());
-              return Promise.resolve("User exists state set up");
-            },
-          },
-        };
-
-        if (pactUrl) {
-          opts.pactUrls = [pactUrl];
-        } else {
-          opts.consumerVersionSelectors = [{ tag: "main", latest: true }];
-        }
-
-        return new Verifier(opts).verifyProvider();
-      });
-    });
-  } else {
-    console.log("Skipping Pact verification. PACT_BROKER_BASE_URL not set.");
-    // This empty test is here to prevent Jest from complaining about no tests in a file.
+  // Skip if we don't have either broker config or local pact file
+  if (!pactBrokerUrl && !pactUrl) {
+    console.log("Skipping Pact verification. Neither PACT_BROKER_BASE_URL nor PACT_URL is set.");
     test("skipping pact verification", () => {});
+    return;
   }
+
+  describe("for the user registration and login flows", () => {
+    it("validates the expectations of its consumers", () => {
+      const opts: VerifierOptions = {
+        provider: "DigitalKudosWallBackend",
+        providerBaseUrl: `http://localhost:${port}`,
+        logLevel: "info",
+        stateHandlers: {
+          "a user with email pact-test@example.com does not exist": async () => {
+            (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
+            (mockUserRepository.save as jest.Mock).mockImplementation((user: User) => Promise.resolve(user));
+            return Promise.resolve("User does not exist state set up");
+          },
+          "a user with email existing@example.com already exists": async () => {
+            (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue({
+              id: "any-id",
+              email: { value: "existing@example.com" },
+            });
+            return Promise.resolve("User already exists state set up");
+          },
+          "a user exists with email pact-test@example.com": async () => {
+            const hashedPasswordResult = await Password.create("ValidPassword123!");
+            const emailResult = Email.create("pact-test@example.com");
+
+            if (hashedPasswordResult.isFailure || emailResult.isFailure) {
+              throw new Error("Failed to create test user credentials");
+            }
+
+            const existingUser = User.create(
+              {
+                name: "pact-test-user",
+                email: emailResult.getValue(),
+                password: hashedPasswordResult.getValue(),
+                isEmailVerified: false,
+              },
+              new UniqueEntityID("some-id")
+            );
+
+            if (existingUser.isFailure) {
+              throw new Error("Failed to create test user");
+            }
+
+            (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(existingUser.getValue());
+            return Promise.resolve("User exists state set up");
+          },
+        },
+      };
+
+      // Configure for Pact Broker if URL is provided
+      if (pactBrokerUrl) {
+        Object.assign(opts, {
+          pactBrokerUrl,
+          pactBrokerToken,
+          publishVerificationResult: true,
+          providerVersion: gitSha,
+          providerVersionBranch: branch,
+          consumerVersionSelectors: [{ mainBranch: true }, { branch }, { deployedOrReleased: true }],
+        });
+      }
+      // Otherwise use local pact file
+      else if (pactUrl) {
+        opts.pactUrls = [pactUrl];
+      }
+
+      return new Verifier(opts).verifyProvider();
+    });
+  });
 });

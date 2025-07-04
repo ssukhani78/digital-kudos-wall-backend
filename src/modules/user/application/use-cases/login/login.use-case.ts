@@ -11,9 +11,12 @@ export interface LoginDTO {
 }
 
 export interface LoginResponse {
-  id: string;
-  email: string;
-  name: string;
+  token: string;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+  };
 }
 
 type LoginError = InvalidCredentialsError | ValidationError;
@@ -37,10 +40,16 @@ export class LoginUseCase implements UseCase<LoginDTO, Result<LoginResponse, Log
       return Result.fail(new InvalidCredentialsError());
     }
 
+    // For now, we'll use a simple token. In a real app, you'd use JWT or similar
+    const token = Buffer.from(`${user.id}:${Date.now()}`).toString("base64");
+
     return Result.ok<LoginResponse, LoginError>({
-      id: user.id.toString(),
-      email: user.email.value,
-      name: user.name,
+      token,
+      user: {
+        id: user.id.toString(),
+        email: user.email.value,
+        name: user.name,
+      },
     });
   }
 }
