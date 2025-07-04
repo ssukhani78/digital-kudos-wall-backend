@@ -14,5 +14,6 @@ const testSupportRouter = Router();
 
 testSupportRouter.post("/users", (req, res) => testSupportController.createUser(req, res));
 testSupportRouter.delete("/cleanup", (req, res) => testSupportController.cleanup(req, res));
+testSupportRouter.get("/verify-email", (req, res) => testSupportController.verifyEmailSent(req, res));
 
 export { testSupportRouter };

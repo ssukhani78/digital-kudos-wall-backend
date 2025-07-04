@@ -7,6 +7,9 @@ import { UserRepository } from "../../modules/user/domain/user.repository";
 import setupUserRoutes from "../../modules/user/presentation/routes/user.routes";
 import express from "express";
 import { LoginUseCase } from "../../modules/user/application/use-cases/login/login.use-case";
+import { Email } from "../../modules/user/domain/value-objects/email";
+import { Password } from "../../modules/user/domain/value-objects/password";
+import { UniqueEntityID } from "../../shared/domain/unique-entity-id";
 
 describe("Pact Verification", () => {
   let server: Server;
@@ -24,12 +27,13 @@ describe("Pact Verification", () => {
   };
 
   const registerUserUseCase = new RegisterUserUseCase(mockUserRepository, mockEmailService);
+  const loginUseCase = new LoginUseCase(mockUserRepository);
 
   // We create a slimmed down version of the app, only mounting the routes
   // we need for the contract tests.
   const app = express();
   app.use(express.json());
-  const userRoutes = setupUserRoutes({ registerUserUseCase, loginUseCase: new LoginUseCase(mockUserRepository) });
+  const userRoutes = setupUserRoutes({ registerUserUseCase, loginUseCase });
   app.use("/users", userRoutes);
 
   beforeAll((done) => {
@@ -47,7 +51,7 @@ describe("Pact Verification", () => {
 
   // Only run Pact verification if the broker URL is set
   if (brokerUrl) {
-    describe("for the user registration flow", () => {
+    describe("for the user registration and login flows", () => {
       it("validates the expectations of its consumers", () => {
         const pactUrl = process.env.PACT_URL;
 
@@ -71,6 +75,31 @@ describe("Pact Verification", () => {
                 email: { value: "existing@example.com" },
               });
               return Promise.resolve("User already exists state set up");
+            },
+            "a user exists with email pact-test@example.com": async () => {
+              const hashedPasswordResult = await Password.create("ValidPassword123!");
+              const emailResult = Email.create("pact-test@example.com");
+
+              if (hashedPasswordResult.isFailure || emailResult.isFailure) {
+                throw new Error("Failed to create test user credentials");
+              }
+
+              const existingUser = User.create(
+                {
+                  name: "pact-test-user",
+                  email: emailResult.getValue(),
+                  password: hashedPasswordResult.getValue(),
+                  isEmailVerified: false,
+                },
+                new UniqueEntityID("some-id")
+              );
+
+              if (existingUser.isFailure) {
+                throw new Error("Failed to create test user");
+              }
+
+              (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(existingUser.getValue());
+              return Promise.resolve("User exists state set up");
             },
           },
         };
