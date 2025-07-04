@@ -1,27 +1,35 @@
-# Standard Operating Procedure: Sociable Unit Tests
+---
+description: Enforce non-negotiable standards for sociable unit tests in the Digital Kudos Wall Backend project.
+globs:
+  - "digital-kudos-wall-backend/src/**/*"
+alwaysApply: false
+---
 
-**Status:** Mandatory
+# 🧪 Standard Operating Procedure: Sociable Unit Tests
+
+**Status:** Mandatory  
 **Version:** 1.0
-**Date:** {{CURRENT_DATE}}
 
 **NON-NEGOTIABLE STANDARD:** Adherence to this SOP is mandatory for all Sociable Unit Tests. Deviations are not permitted without explicit architectural review and approval.
 
-## 1. Purpose
+## 📌 Purpose
 
 This SOP defines the standards for writing Sociable Unit Tests within the Digital Kudos Wall backend application. The primary goal is to ensure that our use cases (application services) are tested effectively, verifying their behavior and interactions while remaining decoupled from internal implementation details and fast to execute.
 
-## 2. Scope
+---
+
+## Scope
 
 This SOP applies to all unit tests written for the application layer, specifically targeting Use Case classes.
 
-## 3. Definitions
+## Definitions
 
 - **Sociable Unit Test:** A test that verifies the behavior of a "unit" (e.g., a use case class) by allowing it to collaborate with its direct, genuine dependencies (like value objects or domain entities) but uses Test Doubles for dependencies that cross process boundaries or represent significant external infrastructure (e.g., repositories, email services, external APIs).
 - **Unit:** In the context of this SOP, a "unit" typically refers to a Use Case class and its closely related domain objects (Entities, Value Objects) that it orchestrates.
 
-## 4. Key Principles (Non-Negotiable)
+## Key Principles (Non-Negotiable)
 
-### 4.1. Behavior-Driven
+### Behavior-Driven
 
 - **Standard:** Tests MUST verify the observable behavior of the use case from the perspective of a client calling its public interface (e.g., the `execute` method).
 - **Focus:** Test cases should cover primary success scenarios, key business rule enforcement (including failure scenarios like validation errors or domain errors), and significant interactions with direct collaborators.
@@ -30,7 +38,7 @@ This SOP applies to all unit tests written for the application layer, specifical
   - `it("should return error when user already exists", ...)`
   - `it("should validate email format", ...)`
 
-### 4.2. Collaboration Strategy
+### Collaboration Strategy
 
 - **Standard A (Real Collaborators):** Use REAL instances of domain objects (Entities, Value Objects) that the use case directly creates or orchestrates.
 
@@ -63,7 +71,7 @@ This SOP applies to all unit tests written for the application layer, specifical
     useCase = new RegisterUserUseCase(userRepository, emailService);
     ```
 
-### 4.3. Decoupling from Structure, Coupling to Behavior
+### Decoupling from Structure, Coupling to Behavior
 
 - **Standard:** Tests MUST interact with the Use Case _only_ through its public API. Tests MUST NOT rely on internal methods, properties, or implementation structure of the Use Case.
 - **Rationale:** This ensures that refactoring the internal implementation of a Use Case (without changing its observable behavior) does not break its tests. This is a core principle of maintainable tests.
@@ -71,13 +79,13 @@ This SOP applies to all unit tests written for the application layer, specifical
   1.  The `Result` object returned by the use case's `execute` method.
   2.  The interactions with Test Doubles (as per `SOP-TestDoubles.md`), verifying that the correct methods on collaborators were called with expected arguments.
 
-### 4.4. Speed and Determinism
+### Speed and Determinism
 
 - **Standard:** Sociable Unit Tests MUST be fast and deterministic.
 - **Rationale:** Fast tests are run frequently, providing quick feedback. Determinism ensures reliability.
 - **Implementation:** Achieved by using in-memory Test Doubles for I/O-bound or slow dependencies.
 
-## 5. Test Structure (Arrange-Act-Assert)
+## Test Structure (Arrange-Act-Assert)
 
 - **Standard:** All tests MUST follow the Arrange-Act-Assert (AAA) pattern.
 
@@ -109,11 +117,10 @@ This SOP applies to all unit tests written for the application layer, specifical
   });
   ```
 
-## 6. Related SOPs
+## Example Implementation
 
-- `SOP-TestDoubles.md`
-- `SOP-NarrowIntegrationTests.md`
+- Sociable Unit Test: `src/modules/user/application/use-cases/register-user/register-user.use-case.test.ts`
 
-## 7. Enforcement
+## Enforcement
 
 Violation of these standards will result in build failures during CI and/or rejection during code review. These standards are non-negotiable to maintain the integrity and effectiveness of our testing suite.

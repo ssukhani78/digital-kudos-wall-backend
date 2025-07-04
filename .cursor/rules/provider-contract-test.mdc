@@ -1,6 +1,19 @@
-# SOP: Contract Testing (Provider)
+---
+description: Enforce non-negotiable standards for provider contract tests in the Digital Kudos Wall Backend project.
+globs:
+  - "digital-kudos-wall-backend/src/**/*"
+alwaysApply: false
+---
 
-This document outlines the **non-negotiable** principles and practices for contract testing in the Digital Kudos Wall project. As the provider, it is our responsibility to honor the contracts set forth by our consumers.
+# 🧪 Standard Operating Procedure: Contract Testing (Provider)
+
+**Status:** Mandatory  
+**Version:** 1.0
+
+**NON-NEGOTIABLE STANDARD:**
+This document outlines the **non-negotiable** principles and practices for contract testing in the Digital Kudos Wall Backend project. As the provider, it is our responsibility to honor the contracts set forth by our consumers.
+
+---
 
 ### Guiding Principles
 
@@ -33,3 +46,7 @@ The manual sharing of contract files is **prohibited**. All contract-related act
 4.  **Isolate External Services**: The provider verification **must not** communicate with real, external third-party services. All such dependencies (e.g., `EmailService`) **must** be stubbed or mocked.
 5.  **CI is a Hard Gate**: Contract verification **must** be a required step in the `commit-stage.yml`. A failure indicates a breaking change for a consumer and **must** stop the pipeline.
 6.  **`can-i-deploy` is the Gatekeeper**: The `release-uat.yml` workflow **must** use `pact-broker can-i-deploy` to check if a new version of the provider is safe to deploy. This command confirms that the provider has successfully verified the contracts for all consumer versions currently in that environment. A deployment **must not** proceed if this check fails.
+
+### Example Implementation
+
+Contract Test (Provider): `src/__tests__/contract/register.provider.contract.test.ts`
