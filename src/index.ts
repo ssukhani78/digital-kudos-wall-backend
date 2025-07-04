@@ -18,7 +18,7 @@ const userRepository = new PrismaUserRepository(prisma);
 
 // Configure email service based on environment
 let emailService: EmailService;
-if (process.env.NODE_ENV === "test") {
+if (process.env.NODE_ENV === "test" || process.env.NODE_ENV === "uat") {
   emailService = TestEmailService.getInstance();
 } else {
   emailService = new NodemailerEmailService();
