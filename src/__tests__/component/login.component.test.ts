@@ -60,10 +60,15 @@ describe("Login API (Component Test)", () => {
       const response = await request(app).post("/users/login").send(requestBody).expect(200);
 
       // Verify response structure
+      expect(response.body).toHaveProperty("token");
+      expect(typeof response.body.token).toBe("string");
       expect(response.body).toEqual({
-        id: validUser.id.toString(),
-        email: validUser.email.value,
-        name: validUser.name,
+        token: expect.any(String),
+        user: {
+          id: validUser.id.toString(),
+          email: validUser.email.value,
+          name: validUser.name,
+        },
       });
 
       // Verify repository was called correctly
