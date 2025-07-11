@@ -53,6 +53,16 @@ REFACTORING GUIDELINES
 4. Run tests after each refactoring step
 5. Prioritize refactorings that remove duplication or improve clarity
 
+POLYMORPHIC DESIGN PRINCIPLES
+
+1. **Focus on behavior over identity**: Design systems that care about what objects DO rather than what they ARE
+2. **Welcome new types without breaking existing code**: Use polymorphism to achieve the Open/Closed Principle - open for extension, closed for modification
+3. **Eliminate type-checking conditionals**: Replace giant switch statements and instanceof checks with polymorphic method calls
+4. **Prefer composition and interfaces**: Use composition, interfaces, and duck typing over inheritance hierarchies
+5. **Think behaviorally first**: Group objects by shared behaviors (what they can do) rather than shared attributes (what they contain)
+6. **Design for extensibility**: New types should integrate seamlessly with existing code without requiring modifications
+7. **Use meaningful abstractions**: Create interfaces that represent genuine behavioral contracts, not just data structures
+
 EXAMPLE WORKFLOW
 When approaching a new feature:
 
