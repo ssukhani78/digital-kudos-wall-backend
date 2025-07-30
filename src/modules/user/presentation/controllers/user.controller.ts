@@ -13,10 +13,10 @@ export class UserController implements Controller<Request, any> {
   constructor(private readonly registerUserUseCase: RegisterUserUseCase) {}
 
   async handle(request: Request): Promise<HttpResponse<any>> {
-    const { name, email, password }: RegisterUserDTO = request.body;
+    const { name, email, password, roleId }: RegisterUserDTO = request.body;
 
     try {
-      const result = await this.registerUserUseCase.execute({ name, email, password });
+      const result = await this.registerUserUseCase.execute({ name, email, password, roleId });
 
       if (result.isSuccess) {
         const user = result.getValue();

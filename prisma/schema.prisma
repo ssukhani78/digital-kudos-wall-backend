@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,12 +7,49 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum RoleType {
+  TEAMLEAD
+  MEMBER
+}
+
+model Role {
+  id   Int      @id @default(autoincrement())
+  role RoleType @unique
+
+  users User[] // Opposite relation for Prisma
+
+  @@map("roles")
+}
+
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String   // We store the hashed password
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String
+  password      String
+  roleId        Int      // Foreign key to Role
+  role          Role     @relation(fields: [roleId], references: [id])
   isEmailVerified Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Minimal relation fields required by Prisma
+  sentKudos     Kudos[] @relation("KudosSender")
+  receivedKudos Kudos[] @relation("KudosRecipient")
+
+  @@map("users")
+}
+
+model Kudos {
+  id          String   @id @default(uuid())
+  senderId    String
+  recipientId String
+  message     String
+  createdAt   DateTime @default(now())
+
+  sender      User     @relation("KudosSender", fields: [senderId], references: [id])
+  recipient   User     @relation("KudosRecipient", fields: [recipientId], references: [id])
+
+  @@map("kudos")
+  @@index([senderId])
+  @@index([recipientId])
 }

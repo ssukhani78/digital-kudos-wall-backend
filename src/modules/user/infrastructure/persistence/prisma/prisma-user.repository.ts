@@ -9,6 +9,7 @@ export class PrismaUserRepository implements UserRepository {
   async findByEmail(emailValue: string): Promise<User | null> {
     const prismaUser = await this.prisma.user.findUnique({
       where: { email: emailValue },
+      include: { role: true },
     });
 
     if (!prismaUser) {
@@ -21,6 +22,7 @@ export class PrismaUserRepository implements UserRepository {
   async findById(id: string): Promise<User | null> {
     const prismaUser = await this.prisma.user.findUnique({
       where: { id },
+      include: { role: true },
     });
 
     if (!prismaUser) {
@@ -38,6 +40,7 @@ export class PrismaUserRepository implements UserRepository {
         email: user.email,
         password: hashedPassword,
         isEmailVerified: user.isEmailVerified,
+        roleId: user.roleId,
       },
       user.id
     ).getValue();
@@ -52,6 +55,10 @@ export class PrismaUserRepository implements UserRepository {
   }
 
   async deleteAll(): Promise<void> {
-    await this.prisma.user.deleteMany({});
+    await this.prisma.user.deleteMany({
+      where: {
+        email: { endsWith: "@example.com" },
+      },
+    });
   }
 }

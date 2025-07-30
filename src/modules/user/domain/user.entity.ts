@@ -3,12 +3,15 @@ import { UniqueEntityID } from "../../../shared/domain/unique-entity-id";
 import { Result } from "../../../shared/core/result";
 import { Email } from "./value-objects/email";
 import { Password } from "./value-objects/password";
+import { RoleType } from "./value-objects/role-type";
 
 export interface UserProps {
   name: string;
   email: Email;
   password: Password;
   isEmailVerified: boolean;
+  roleId: number;
+  roleType?: RoleType;
 }
 
 export interface UserSnapshot extends UserProps {
@@ -38,10 +41,20 @@ export class User extends Entity<UserProps> {
     return this.props.isEmailVerified || false;
   }
 
+  get roleId(): number {
+    return this.props.roleId;
+  }
+
+  get roleType(): RoleType | undefined {
+    return this.props.roleType;
+  }
+
   public static create(props: UserProps, id?: UniqueEntityID): Result<User> {
     const defaultProps: UserProps = {
       ...props,
       isEmailVerified: props.isEmailVerified || false,
+      roleId: props.roleId,
+      roleType: props.roleType,
     };
 
     return Result.ok(new User(defaultProps, id));
@@ -54,6 +67,8 @@ export class User extends Entity<UserProps> {
         email: snapshot.email,
         password: snapshot.password,
         isEmailVerified: snapshot.isEmailVerified,
+        roleId: snapshot.roleId,
+        roleType: snapshot.roleType,
       },
       snapshot.id
     );

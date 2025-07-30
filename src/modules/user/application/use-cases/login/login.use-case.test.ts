@@ -25,6 +25,7 @@ describe("LoginUseCase", () => {
       email: validEmail,
       password: validPassword,
       isEmailVerified: true,
+      roleId: 1, // TEAMLEAD role
     });
     expect(userResult.isSuccess).toBe(true);
     validUser = userResult.getValue();

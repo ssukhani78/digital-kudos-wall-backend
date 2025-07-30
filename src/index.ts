@@ -7,6 +7,7 @@ import { NodemailerEmailService } from "./modules/user/infrastructure/services/n
 import { TestEmailService } from "./modules/user/infrastructure/services/test-email.service";
 import { EmailService } from "./modules/user/domain/email.service";
 import { prisma } from "./shared/infrastructure/persistence/prisma/client";
+import { PrismaRoleRepository } from "./modules/user/infrastructure/persistence/prisma/prisma-role.repository";
 
 // Load environment variables
 dotenv.config();
@@ -15,6 +16,7 @@ const PORT = process.env.PORT || 3001;
 
 // Initialize infrastructure dependencies
 const userRepository = new PrismaUserRepository(prisma);
+const roleRepository = new PrismaRoleRepository(prisma);
 
 // Configure email service based on environment
 let emailService: EmailService;
@@ -25,7 +27,11 @@ if (process.env.NODE_ENV === "test" || process.env.NODE_ENV === "uat") {
 }
 
 // Initialize use cases with their dependencies
-const registerUserUseCase = new RegisterUserUseCase(userRepository, emailService);
+const registerUserUseCase = new RegisterUserUseCase(
+  userRepository,
+  emailService,
+  roleRepository
+);
 const loginUseCase = new LoginUseCase(userRepository);
 
 // Create and start the application

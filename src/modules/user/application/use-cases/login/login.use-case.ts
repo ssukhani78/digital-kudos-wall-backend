@@ -4,6 +4,7 @@ import { UserRepository } from "../../../domain/user.repository";
 import { InvalidCredentialsError } from "../../../domain/errors/invalid-credentials.error";
 import { ValidationError } from "../../../domain/errors/validation.error";
 import { Email } from "../../../domain/value-objects/email";
+import { RoleType } from "../../../domain/value-objects/role-type";
 
 export interface LoginDTO {
   email: string;
@@ -16,12 +17,15 @@ export interface LoginResponse {
     id: string;
     email: string;
     name: string;
+    isTeamLead: boolean;
   };
 }
 
 type LoginError = InvalidCredentialsError | ValidationError;
 
-export class LoginUseCase implements UseCase<LoginDTO, Result<LoginResponse, LoginError>> {
+export class LoginUseCase
+  implements UseCase<LoginDTO, Result<LoginResponse, LoginError>>
+{
   constructor(private readonly userRepository: UserRepository) {}
 
   async execute(request: LoginDTO): Promise<Result<LoginResponse, LoginError>> {
@@ -35,7 +39,9 @@ export class LoginUseCase implements UseCase<LoginDTO, Result<LoginResponse, Log
       return Result.fail(new InvalidCredentialsError());
     }
 
-    const isPasswordValid = await user.password.comparePassword(request.password);
+    const isPasswordValid = await user.password.comparePassword(
+      request.password
+    );
     if (!isPasswordValid) {
       return Result.fail(new InvalidCredentialsError());
     }
@@ -49,6 +55,7 @@ export class LoginUseCase implements UseCase<LoginDTO, Result<LoginResponse, Log
         id: user.id.toString(),
         email: user.email.value,
         name: user.name,
+        isTeamLead: user.roleType === RoleType.TEAMLEAD,
       },
     });
   }
