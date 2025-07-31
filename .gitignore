@@ -66,3 +66,4 @@ Thumbs.db
 # Ignore all database files
 *.db
 *.db-journal
+!prisma/dev.db
