@@ -12,13 +12,13 @@ export class TestSupportController {
 
   async createUser(req: Request, res: Response): Promise<Response> {
     try {
-      const { name, email, password } = req.body as RegisterUserDTO;
+      const { name, email, password, roleId } = req.body as RegisterUserDTO;
 
       if (!name || !email || !password) {
         return res.status(400).json({ error: "Missing required fields: name, email, password" });
       }
 
-      const user = await this.createTestUserUseCase.execute({ name, email, password });
+      const user = await this.createTestUserUseCase.execute({ name, email, password, roleId });
       return res.status(201).json(user);
     } catch (error: any) {
       return res.status(500).json({

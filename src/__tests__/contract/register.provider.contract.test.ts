@@ -10,6 +10,7 @@ import { LoginUseCase } from "../../modules/user/application/use-cases/login/log
 import { Email } from "../../modules/user/domain/value-objects/email";
 import { Password } from "../../modules/user/domain/value-objects/password";
 import { UniqueEntityID } from "../../shared/domain/unique-entity-id";
+import { RoleRepository } from "../../modules/user/domain/role.repository";
 
 describe("Pact Verification", () => {
   let server: Server;
@@ -26,7 +27,11 @@ describe("Pact Verification", () => {
     sendConfirmationEmail: jest.fn(),
   };
 
-  const registerUserUseCase = new RegisterUserUseCase(mockUserRepository, mockEmailService);
+  const mockRoleRepository: RoleRepository = {
+    findById: jest.fn(),
+  };
+
+  const registerUserUseCase = new RegisterUserUseCase(mockUserRepository, mockEmailService, mockRoleRepository);
   const loginUseCase = new LoginUseCase(mockUserRepository);
 
   const app = express();
@@ -91,6 +96,7 @@ describe("Pact Verification", () => {
                 email: emailResult.getValue(),
                 password: hashedPasswordResult.getValue(),
                 isEmailVerified: false,
+                roleId: 1,
               },
               new UniqueEntityID("some-id")
             );

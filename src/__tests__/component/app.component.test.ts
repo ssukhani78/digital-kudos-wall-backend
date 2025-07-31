@@ -4,10 +4,12 @@ import { RegisterUserUseCase } from "../../modules/user/application/use-cases/re
 import { UserRepository } from "../../modules/user/domain/user.repository";
 import { EmailService } from "../../modules/user/domain/email.service";
 import { LoginUseCase } from "../../modules/user/application/use-cases/login/login.use-case";
+import { RoleRepository } from "../../modules/user/domain/role.repository";
 
 describe("App Component Tests", () => {
   let mockUserRepository: UserRepository;
   let mockEmailService: EmailService;
+  let mockRoleRepository: RoleRepository;
 
   beforeEach(() => {
     mockUserRepository = {
@@ -20,12 +22,15 @@ describe("App Component Tests", () => {
     mockEmailService = {
       sendConfirmationEmail: jest.fn(),
     };
+    mockRoleRepository = {
+      findById: jest.fn(),
+    };
   });
 
   describe("GET /", () => {
     test("should return welcome message", async () => {
       const app = createApp({
-        registerUserUseCase: new RegisterUserUseCase(mockUserRepository, mockEmailService),
+        registerUserUseCase: new RegisterUserUseCase(mockUserRepository, mockEmailService, mockRoleRepository),
         loginUseCase: new LoginUseCase(mockUserRepository),
       });
       const response = await request(app).get("/").expect(200);
@@ -44,7 +49,7 @@ describe("App Component Tests", () => {
   describe("GET /health", () => {
     test("should return health status", async () => {
       const app = createApp({
-        registerUserUseCase: new RegisterUserUseCase(mockUserRepository, mockEmailService),
+        registerUserUseCase: new RegisterUserUseCase(mockUserRepository, mockEmailService, mockRoleRepository),
         loginUseCase: new LoginUseCase(mockUserRepository),
       });
       const response = await request(app).get("/health").expect(200);
@@ -61,7 +66,7 @@ describe("App Component Tests", () => {
   describe("GET /nonexistent", () => {
     test("should return 404 for unknown routes", async () => {
       const app = createApp({
-        registerUserUseCase: new RegisterUserUseCase(mockUserRepository, mockEmailService),
+        registerUserUseCase: new RegisterUserUseCase(mockUserRepository, mockEmailService, mockRoleRepository),
         loginUseCase: new LoginUseCase(mockUserRepository),
       });
       const response = await request(app).get("/nonexistent").expect(404);
