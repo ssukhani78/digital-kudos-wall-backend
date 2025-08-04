@@ -39,17 +39,29 @@ model User {
   @@map("users")
 }
 
+model Category {
+  id   Int     @id @default(autoincrement())
+  name String  @unique
+
+  kudos Kudos[] // Relation to Kudos
+
+  @@map("categories")
+}
+
 model Kudos {
   id          String   @id @default(uuid())
+  categoryId  Int      // Foreign key to Category
   senderId    String
   recipientId String
   message     String
   createdAt   DateTime @default(now())
 
+  category    Category @relation(fields: [categoryId], references: [id])
   sender      User     @relation("KudosSender", fields: [senderId], references: [id])
   recipient   User     @relation("KudosRecipient", fields: [recipientId], references: [id])
 
   @@map("kudos")
   @@index([senderId])
   @@index([recipientId])
+  @@index([categoryId])
 }

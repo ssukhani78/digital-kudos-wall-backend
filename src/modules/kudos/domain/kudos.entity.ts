@@ -7,7 +7,7 @@ interface KudosProps {
   senderId: string;
   recipientId: string;
   message: string;
-  category: string;
+  categoryId: number;
   createdAt: Date;
 }
 
@@ -28,8 +28,8 @@ export class Kudos extends Entity<KudosProps> {
     return this.props.message;
   }
 
-  get category(): string {
-    return this.props.category;
+  get categoryId(): number {
+    return this.props.categoryId;
   }
 
   get createdAt(): Date {
@@ -39,29 +39,31 @@ export class Kudos extends Entity<KudosProps> {
   public static create(props: KudosProps, id?: UniqueEntityID): Result<Kudos> {
     // Validate message length (20-200 characters)
     if (!props.message || props.message.length < 20) {
-      return Result.fail(
+      return Result.fail<Kudos>(
         new ValidationError("Message must be at least 20 characters long")
       );
     }
     if (props.message.length > 200) {
-      return Result.fail(
+      return Result.fail<Kudos>(
         new ValidationError("Message cannot exceed 200 characters")
       );
     }
 
     // Prevent self-kudos
     if (props.senderId === props.recipientId) {
-      return Result.fail(
+      return Result.fail<Kudos>(
         new ValidationError("Cannot create kudos for yourself")
       );
     }
 
     // Validate required fields
     if (!props.message.trim()) {
-      return Result.fail(new ValidationError("Message cannot be empty"));
+      return Result.fail<Kudos>(new ValidationError("Message cannot be empty"));
     }
-    if (!props.category.trim()) {
-      return Result.fail(new ValidationError("Category is required"));
+    if (!props.categoryId || props.categoryId <= 0) {
+      return Result.fail<Kudos>(
+        new ValidationError("Valid category is required")
+      );
     }
 
     const kudos = new Kudos(
@@ -72,6 +74,6 @@ export class Kudos extends Entity<KudosProps> {
       id
     );
 
-    return Result.ok(kudos);
+    return Result.ok<Kudos>(kudos);
   }
 }

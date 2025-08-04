@@ -5,4 +5,5 @@ export interface UserRepository {
   findById(id: string): Promise<User | null>;
   save(user: User): Promise<void>;
   deleteAll(): Promise<void>;
+  findAllExceptUser(userId: string): Promise<User[]>;
 }

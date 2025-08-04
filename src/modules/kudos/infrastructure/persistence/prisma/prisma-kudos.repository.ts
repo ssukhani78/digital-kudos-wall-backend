@@ -1,7 +1,6 @@
+import { PrismaClient } from "../../../../../shared/infrastructure/persistence/prisma/client";
 import { KudosRepository } from "../../../domain/kudos.repository";
 import { Kudos } from "../../../domain/kudos.entity";
-import { PrismaClient } from "@prisma/client";
-import { UniqueEntityID } from "../../../../../shared/domain/unique-entity-id";
 
 export class PrismaKudosRepository implements KudosRepository {
   constructor(private prisma: PrismaClient) {}
@@ -10,10 +9,10 @@ export class PrismaKudosRepository implements KudosRepository {
     await this.prisma.kudos.create({
       data: {
         id: kudos.id.toString(),
+        categoryId: kudos.categoryId,
         senderId: kudos.senderId,
         recipientId: kudos.recipientId,
         message: kudos.message,
-        category: kudos.category,
         createdAt: kudos.createdAt,
       },
     });
@@ -22,57 +21,67 @@ export class PrismaKudosRepository implements KudosRepository {
   async findById(id: string): Promise<Kudos | null> {
     const kudos = await this.prisma.kudos.findUnique({
       where: { id },
-    });
-
-    if (!kudos) return null;
-
-    return Kudos.create(
-      {
-        senderId: kudos.senderId,
-        recipientId: kudos.recipientId,
-        message: kudos.message,
-        category: kudos.category,
-        createdAt: kudos.createdAt,
+      include: {
+        sender: true,
+        recipient: true,
+        category: true,
       },
-      new UniqueEntityID(kudos.id)
-    ).getValue();
-  }
-
-  async findByRecipientId(recipientId: string): Promise<Kudos[]> {
-    const kudosList = await this.prisma.kudos.findMany({
-      where: { recipientId },
     });
 
-    return kudosList.map((kudos) =>
-      Kudos.create(
-        {
-          senderId: kudos.senderId,
-          recipientId: kudos.recipientId,
-          message: kudos.message,
-          category: kudos.category,
-          createdAt: kudos.createdAt,
-        },
-        new UniqueEntityID(kudos.id)
-      ).getValue()
-    );
+    if (!kudos) {
+      return null;
+    }
+
+    return Kudos.create({
+      categoryId: kudos.categoryId,
+      senderId: kudos.senderId,
+      recipientId: kudos.recipientId,
+      message: kudos.message,
+      createdAt: kudos.createdAt,
+    }).getValue();
   }
 
   async findBySenderId(senderId: string): Promise<Kudos[]> {
-    const kudosList = await this.prisma.kudos.findMany({
+    const kudos = await this.prisma.kudos.findMany({
       where: { senderId },
+      include: {
+        sender: true,
+        recipient: true,
+        category: true,
+      },
+      orderBy: { createdAt: "desc" },
     });
 
-    return kudosList.map((kudos) =>
-      Kudos.create(
-        {
-          senderId: kudos.senderId,
-          recipientId: kudos.recipientId,
-          message: kudos.message,
-          category: kudos.category,
-          createdAt: kudos.createdAt,
-        },
-        new UniqueEntityID(kudos.id)
-      ).getValue()
+    return kudos.map((kudos) =>
+      Kudos.create({
+        categoryId: kudos.categoryId,
+        senderId: kudos.senderId,
+        recipientId: kudos.recipientId,
+        message: kudos.message,
+        createdAt: kudos.createdAt,
+      }).getValue()
+    );
+  }
+
+  async findByRecipientId(recipientId: string): Promise<Kudos[]> {
+    const kudos = await this.prisma.kudos.findMany({
+      where: { recipientId },
+      include: {
+        sender: true,
+        recipient: true,
+        category: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return kudos.map((kudos) =>
+      Kudos.create({
+        categoryId: kudos.categoryId,
+        senderId: kudos.senderId,
+        recipientId: kudos.recipientId,
+        message: kudos.message,
+        createdAt: kudos.createdAt,
+      }).getValue()
     );
   }
 }

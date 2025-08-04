@@ -1,6 +1,7 @@
 import { UseCase } from "../../../../../shared/core/use-case";
 import { Result } from "../../../../../shared/core/result";
 import { UserRepository } from "../../../domain/user.repository";
+import { TokenGenerationService } from "../../../domain/token-generation.service";
 import { InvalidCredentialsError } from "../../../domain/errors/invalid-credentials.error";
 import { ValidationError } from "../../../domain/errors/validation.error";
 import { Email } from "../../../domain/value-objects/email";
@@ -26,7 +27,10 @@ type LoginError = InvalidCredentialsError | ValidationError;
 export class LoginUseCase
   implements UseCase<LoginDTO, Result<LoginResponse, LoginError>>
 {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly tokenGenerationService: TokenGenerationService
+  ) {}
 
   async execute(request: LoginDTO): Promise<Result<LoginResponse, LoginError>> {
     const emailResult = Email.create(request.email);
@@ -46,8 +50,7 @@ export class LoginUseCase
       return Result.fail(new InvalidCredentialsError());
     }
 
-    // For now, we'll use a simple token. In a real app, you'd use JWT or similar
-    const token = Buffer.from(`${user.id}:${Date.now()}`).toString("base64");
+    const token = this.tokenGenerationService.generateToken(user.id.toString());
 
     return Result.ok<LoginResponse, LoginError>({
       token,

@@ -61,4 +61,17 @@ export class PrismaUserRepository implements UserRepository {
       },
     });
   }
+
+  async findAllExceptUser(userId: string): Promise<User[]> {
+    const prismaUsers = await this.prisma.user.findMany({
+      where: {
+        id: {
+          not: userId,
+        },
+      },
+      include: { role: true },
+    });
+
+    return prismaUsers.map((prismaUser) => UserMapper.toDomain(prismaUser)!);
+  }
 }

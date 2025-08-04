@@ -3,10 +3,12 @@ import { UserRepository } from "../../../domain/user.repository";
 import { User } from "../../../domain/user.entity";
 import { Email } from "../../../domain/value-objects/email";
 import { Password } from "../../../domain/value-objects/password";
+import { TokenGenerationService } from "../../../domain/token-generation.service";
 
 describe("LoginUseCase", () => {
   let loginUseCase: LoginUseCase;
   let userRepository: jest.Mocked<UserRepository>;
+  let tokenGenerationService: jest.Mocked<TokenGenerationService>;
   let validEmail: Email;
   let validPassword: Password;
   let validUser: User;
@@ -36,9 +38,15 @@ describe("LoginUseCase", () => {
       findById: jest.fn(),
       save: jest.fn(),
       deleteAll: jest.fn(),
+      findAllExceptUser: jest.fn(),
     };
 
-    loginUseCase = new LoginUseCase(userRepository);
+    // Mock token generation service
+    tokenGenerationService = {
+      generateToken: jest.fn().mockReturnValue("mock-token-123"),
+    };
+
+    loginUseCase = new LoginUseCase(userRepository, tokenGenerationService);
   });
 
   it("should successfully log in a user with valid credentials", async () => {
@@ -55,6 +63,9 @@ describe("LoginUseCase", () => {
     // Assert
     expect(result.isSuccess).toBe(true);
     expect(userRepository.findByEmail).toHaveBeenCalledWith(loginDTO.email);
+    expect(tokenGenerationService.generateToken).toHaveBeenCalledWith(
+      validUser.id.toString()
+    );
   });
 
   it("should fail when user does not exist", async () => {

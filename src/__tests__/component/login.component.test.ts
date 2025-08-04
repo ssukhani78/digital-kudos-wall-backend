@@ -5,10 +5,13 @@ import { LoginUseCase } from "../../modules/user/application/use-cases/login/log
 import { createApp } from "../../app";
 import { UserBuilder } from "../../modules/user/infrastructure/persistence/prisma/__tests__/user.builder";
 import { RegisterUserUseCase } from "../../modules/user/application/use-cases/register-user/register-user.use-case";
+import { TokenGenerationService } from "../../modules/user/domain/token-generation.service";
+import { GetRecipientsUseCase } from "../../modules/user/application/use-cases/get-recipients/get-recipients.use-case";
 
 describe("Login API (Component Test)", () => {
   let app: Application;
   let mockUserRepository: jest.Mocked<UserRepository>;
+  let mockTokenGenerationService: jest.Mocked<TokenGenerationService>;
   let userBuilder: UserBuilder;
 
   beforeEach(() => {
@@ -18,10 +21,18 @@ describe("Login API (Component Test)", () => {
       findById: jest.fn(),
       save: jest.fn(),
       deleteAll: jest.fn(),
+      findAllExceptUser: jest.fn(),
+    };
+
+    mockTokenGenerationService = {
+      generateToken: jest.fn().mockReturnValue("mock-token-123"),
     };
 
     // Create the real use case with mock dependencies
-    const loginUseCase = new LoginUseCase(mockUserRepository);
+    const loginUseCase = new LoginUseCase(
+      mockUserRepository,
+      mockTokenGenerationService
+    );
 
     // Mock the register use case since we don't need it for these tests
     const mockRegisterUseCase = {
@@ -30,10 +41,16 @@ describe("Login API (Component Test)", () => {
       emailService: { sendConfirmationEmail: jest.fn() },
     } as unknown as RegisterUserUseCase;
 
+    // Mock the get recipients use case since we don't need it for these tests
+    const mockGetRecipientsUseCase = {
+      execute: jest.fn(),
+    } as unknown as GetRecipientsUseCase;
+
     // Create the app with the test-configured use cases
     app = createApp({
       registerUserUseCase: mockRegisterUseCase,
       loginUseCase,
+      getRecipientsUseCase: mockGetRecipientsUseCase,
     });
 
     // Initialize test data builder
@@ -79,6 +96,11 @@ describe("Login API (Component Test)", () => {
       // Verify repository was called correctly
       expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(
         requestBody.email
+      );
+
+      // Verify token generation was called
+      expect(mockTokenGenerationService.generateToken).toHaveBeenCalledWith(
+        validUser.id.toString()
       );
     });
 
