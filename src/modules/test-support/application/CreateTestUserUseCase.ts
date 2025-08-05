@@ -1,14 +1,14 @@
 import { UserRepository } from "../../user/domain/user.repository";
 import { User } from "../../user/domain/user.entity";
-import { RegisterUserDTO } from "../../user/application/use-cases/register-user/register-user.use-case";
 import { Email } from "../../user/domain/value-objects/email";
 import { Password } from "../../user/domain/value-objects/password";
 import { RoleId } from "../../user/domain/value-objects/role-id";
+import { RegisterDTO } from "../../auth/application/use-cases/register/register.use-case";
 
 export class CreateTestUserUseCase {
   constructor(private readonly userRepository: UserRepository) {}
 
-  async execute(payload: RegisterUserDTO): Promise<User> {
+  async execute(payload: RegisterDTO): Promise<User> {
     const existingUser = await this.userRepository.findByEmail(payload.email);
     if (existingUser) {
       return existingUser;

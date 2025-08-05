@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { CreateTestUserUseCase } from "../application/CreateTestUserUseCase";
 import { CleanupTestDataUseCase } from "../application/CleanupTestDataUseCase";
-import { RegisterUserDTO } from "../../user/application/use-cases/register-user/register-user.use-case";
 import { TestEmailService } from "../../user/infrastructure/services/test-email.service";
+import { RegisterDTO } from "../../auth/application/use-cases/register/register.use-case";
 
-export class TestSupportController {
+  export class TestSupportController {
   constructor(
     private readonly createTestUserUseCase: CreateTestUserUseCase,
     private readonly cleanupTestDataUseCase: CleanupTestDataUseCase
@@ -12,7 +12,7 @@ export class TestSupportController {
 
   async createUser(req: Request, res: Response): Promise<Response> {
     try {
-      const { name, email, password, roleId } = req.body as RegisterUserDTO;
+      const { name, email, password, roleId } = req.body as RegisterDTO;
 
       if (!name || !email || !password) {
         return res.status(400).json({ error: "Missing required fields: name, email, password" });

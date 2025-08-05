@@ -5,15 +5,11 @@ import { validateToken } from "../../../../shared/presentation/middleware/token-
 export const kudosRouter = Router();
 
 export const makeKudosRoutes = (controller: KudosController) => {
-  // Get all categories (public endpoint)
-  kudosRouter.get("/categories", (req, res) =>
-    controller.getCategories(req, res)
-  );
-
   // Create kudos (requires authentication)
-  kudosRouter.post("/", validateToken, (req, res) =>
-    controller.createKudos(req, res)
-  );
+  kudosRouter.post("/", validateToken, async (req, res) => {
+    const result = await controller.handle(req);
+    res.status(result.statusCode).json(result.body);
+  });
 
   return kudosRouter;
 };

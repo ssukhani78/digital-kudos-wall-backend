@@ -1,42 +1,32 @@
 import { Verifier, VerifierOptions } from "@pact-foundation/pact";
 import { Server } from "http";
-import { RegisterUserUseCase } from "../../modules/user/application/use-cases/register-user/register-user.use-case";
 import { User } from "../../modules/user/domain/user.entity";
-import { EmailService } from "../../modules/user/domain/email.service";
 import { UserRepository } from "../../modules/user/domain/user.repository";
 import setupUserRoutes from "../../modules/user/presentation/routes/user.routes";
 import express from "express";
-import { LoginUseCase } from "../../modules/user/application/use-cases/login/login.use-case";
 import { Email } from "../../modules/user/domain/value-objects/email";
 import { Password } from "../../modules/user/domain/value-objects/password";
 import { UniqueEntityID } from "../../shared/domain/unique-entity-id";
-import { RoleRepository } from "../../modules/user/domain/role.repository";
+import { GetRecipientsUseCase } from "../../modules/user/application/use-cases/get-recipients/get-recipients.use-case";
+
+
+const mockUserRepository: UserRepository = {
+  findByEmail: jest.fn().mockResolvedValue(null),
+  findById: jest.fn().mockResolvedValue(null),
+  save: jest.fn().mockResolvedValue(null),
+  deleteAll: jest.fn().mockResolvedValue(null),
+  findAllExceptUser: jest.fn().mockResolvedValue([]),
+};
 
 describe("Pact Verification", () => {
   let server: Server;
   const port = 8081;
 
-  const mockUserRepository: UserRepository = {
-    findByEmail: jest.fn(),
-    findById: jest.fn(),
-    save: jest.fn(),
-    deleteAll: jest.fn(),
-  };
 
-  const mockEmailService: EmailService = {
-    sendConfirmationEmail: jest.fn(),
-  };
-
-  const mockRoleRepository: RoleRepository = {
-    findById: jest.fn(),
-  };
-
-  const registerUserUseCase = new RegisterUserUseCase(mockUserRepository, mockEmailService, mockRoleRepository);
-  const loginUseCase = new LoginUseCase(mockUserRepository);
-
+  const getRecipientsUseCase = new GetRecipientsUseCase(mockUserRepository);
   const app = express();
   app.use(express.json());
-  const userRoutes = setupUserRoutes({ registerUserUseCase, loginUseCase });
+  const userRoutes = setupUserRoutes({ getRecipientsUseCase });
   app.use("/users", userRoutes);
 
   beforeAll((done) => {

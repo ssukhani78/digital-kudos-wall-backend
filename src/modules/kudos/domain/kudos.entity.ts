@@ -1,7 +1,7 @@
 import { Entity } from "../../../shared/domain/entity";
 import { UniqueEntityID } from "../../../shared/domain/unique-entity-id";
+import { ValidationError } from "./errors/validation.error";
 import { Result } from "../../../shared/core/result";
-import { ValidationError } from "../domain/errors/validation.error";
 
 interface KudosProps {
   senderId: string;
@@ -36,40 +36,38 @@ export class Kudos extends Entity<KudosProps> {
     return this.props.createdAt;
   }
 
-  public static create(props: KudosProps, id?: UniqueEntityID): Result<Kudos> {
+  public static create(
+    props: KudosProps,
+    id?: UniqueEntityID
+  ): Result<Kudos, string> {
     // Validate message length (20-200 characters)
     if (!props.message || props.message.length < 20) {
-      return Result.fail<Kudos>(
-        new ValidationError("Message must be at least 20 characters long")
+      return Result.fail<Kudos, string>(
+        "Message must be at least 20 characters long"
       );
     }
     if (props.message.length > 200) {
-      return Result.fail<Kudos>(
-        new ValidationError("Message cannot exceed 200 characters")
-      );
+      return Result.fail<Kudos, string>("Message cannot exceed 200 characters");
     }
 
     // Prevent self-kudos
     if (props.senderId === props.recipientId) {
-      return Result.fail<Kudos>(
-        new ValidationError("Cannot create kudos for yourself")
-      );
+      return Result.fail<Kudos, string>("Cannot create kudos for yourself");
     }
 
     // Validate required fields
     if (!props.message.trim()) {
-      return Result.fail<Kudos>(new ValidationError("Message cannot be empty"));
+      return Result.fail<Kudos, string>("Message cannot be empty");
     }
     if (!props.categoryId || props.categoryId <= 0) {
-      return Result.fail<Kudos>(
-        new ValidationError("Valid category is required")
-      );
+      return Result.fail<Kudos, string>("Valid category is required");
     }
 
     const kudos = new Kudos(
       {
         ...props,
-        createdAt: props.createdAt || new Date(),
+        categoryId: Number(props.categoryId),
+        message: props.message.trim(),
       },
       id
     );

@@ -1,57 +1,38 @@
 import { Controller } from "../../../../shared/presentation/controller";
-import { RegisterUserUseCase, RegisterUserDTO } from "../../application/use-cases/register-user/register-user.use-case";
+import { GetRecipientsUseCase } from "../../application/use-cases/get-recipients/get-recipients.use-case";
+import { AuthenticatedRequest } from "../../../../shared/presentation/middleware/token-validation.middleware";
 import { HttpResponse } from "../../../../shared/presentation/http-response";
-import { UserAlreadyExistsError } from "../../domain/errors/user-already-exists.error";
-import { ValidationError } from "../../domain/errors/validation.error";
-import { Request } from "express";
 
-export interface RegisterErrorResponse {
-  message: string;
-}
+export class UserController implements Controller<AuthenticatedRequest, any> {
+  constructor(private getRecipientsUseCase: GetRecipientsUseCase) {}
 
-export class UserController implements Controller<Request, any> {
-  constructor(private readonly registerUserUseCase: RegisterUserUseCase) {}
-
-  async handle(request: Request): Promise<HttpResponse<any>> {
-    const { name, email, password, roleId }: RegisterUserDTO = request.body;
-
+  async handle(req: AuthenticatedRequest): Promise<HttpResponse<any>> {
     try {
-      const result = await this.registerUserUseCase.execute({ name, email, password, roleId });
-
-      if (result.isSuccess) {
-        const user = result.getValue();
-        return HttpResponse.created({
-          id: user.id.toString(),
-          name: user.name,
-          email: user.email.value,
+      const userId = req.user?.id;
+      if (!userId) {
+        return HttpResponse.unauthorized({
+          success: false,
+          message: "Authentication required",
         });
       }
 
-      const error = result.error();
+      const result = await this.getRecipientsUseCase.execute({ userId });
 
-      if (error instanceof UserAlreadyExistsError) {
-        return HttpResponse.conflict({
-          message: error.message,
+      if (result.isFailure) {
+        return HttpResponse.serverError({
+          success: false,
+          message: result.error(),
         });
       }
 
-      if (error instanceof ValidationError) {
-        return HttpResponse.badRequest({
-          message: error.message,
-        });
-      }
-
-      if (typeof error === "string") {
-        return HttpResponse.badRequest({
-          message: error,
-        });
-      }
-
-      return HttpResponse.serverError({
-        message: "An unexpected error occurred",
+      const recipients = result.getValue();
+      return HttpResponse.ok({
+        success: true,
+        data: recipients,
       });
     } catch (error) {
       return HttpResponse.serverError({
+        success: false,
         message: "An unexpected error occurred",
       });
     }

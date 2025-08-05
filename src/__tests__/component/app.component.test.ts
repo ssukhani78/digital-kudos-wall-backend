@@ -1,15 +1,24 @@
 import request from "supertest";
 import { createApp } from "../../app";
-import { RegisterUserUseCase } from "../../modules/user/application/use-cases/register-user/register-user.use-case";
 import { UserRepository } from "../../modules/user/domain/user.repository";
 import { EmailService } from "../../modules/user/domain/email.service";
-import { LoginUseCase } from "../../modules/user/application/use-cases/login/login.use-case";
 import { RoleRepository } from "../../modules/user/domain/role.repository";
+import { TokenGenerationService } from "../../modules/user/domain/token-generation.service";
+import { KudosRepository } from "../../modules/kudos/domain/kudos.repository";
+import { CategoryRepository } from "../../modules/category/domain/category.repository";
+import { RegisterUseCase } from "../../modules/auth/application/use-cases/register/register.use-case";
+import { LoginUseCase } from "../../modules/auth/application/use-cases/login/login.use-case";
+import { GetRecipientsUseCase } from "../../modules/user/application/use-cases/get-recipients/get-recipients.use-case";
+import { CreateKudosUseCase } from "../../modules/kudos/application/use-cases/create-kudos/create-kudos.use-case";
+import { GetCategoriesUseCase } from "../../modules/category/application/use-cases/get-categories/get-categories.use-case";
 
 describe("App Component Tests", () => {
   let mockUserRepository: UserRepository;
   let mockEmailService: EmailService;
   let mockRoleRepository: RoleRepository;
+  let mockTokenGenerationService: TokenGenerationService;
+  let mockKudosRepository: KudosRepository;
+  let mockCategoryRepository: CategoryRepository;
 
   beforeEach(() => {
     mockUserRepository = {
@@ -17,65 +26,115 @@ describe("App Component Tests", () => {
       findById: jest.fn(),
       save: jest.fn(),
       deleteAll: jest.fn(),
+      findAllExceptUser: jest.fn(),
     };
 
     mockEmailService = {
       sendConfirmationEmail: jest.fn(),
     };
+
     mockRoleRepository = {
       findById: jest.fn(),
     };
+
+    mockTokenGenerationService = {
+      generateToken: jest.fn(),
+    };
+
+    mockKudosRepository = {
+      create: jest.fn(),
+      findById: jest.fn(),
+      findBySenderId: jest.fn(),
+      findByRecipientId: jest.fn(),
+    };
+
+    mockCategoryRepository = {
+      findAll: jest.fn(),
+      findById: jest.fn(),
+      findByName: jest.fn(),
+    };
   });
 
-  describe("GET /", () => {
-    test("should return welcome message", async () => {
-      const app = createApp({
-        registerUserUseCase: new RegisterUserUseCase(mockUserRepository, mockEmailService, mockRoleRepository),
-        loginUseCase: new LoginUseCase(mockUserRepository),
-      });
-      const response = await request(app).get("/").expect(200);
+  describe("POST /auth/register", () => {
+    it("should register a new user successfully", async () => {
+      // Reset mocks and setup for successful registration
+      jest.clearAllMocks();
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
+      (mockUserRepository.save as jest.Mock).mockResolvedValue(undefined);
+      (mockRoleRepository.findById as jest.Mock).mockResolvedValue(true);
+      (mockEmailService.sendConfirmationEmail as jest.Mock).mockResolvedValue(undefined);
 
-      expect(response.body).toEqual({
-        message: "Welcome to Digital Kudos Wall Backend API",
-        version: "1.0.0",
-        endpoints: {
-          health: "/health",
-          kudos: "/kudos",
-        },
+      const app = createApp({
+        registerUseCase: new RegisterUseCase(
+          mockUserRepository,
+          mockEmailService,
+          mockRoleRepository
+        ),
+        loginUseCase: new LoginUseCase(
+          mockUserRepository,
+          mockTokenGenerationService
+        ),
+        getRecipientsUseCase: new GetRecipientsUseCase(mockUserRepository),
+        createKudosUseCase: new CreateKudosUseCase(
+          mockKudosRepository,
+          mockUserRepository,
+          mockCategoryRepository
+        ),
+        getCategoriesUseCase: new GetCategoriesUseCase(mockCategoryRepository),
       });
+
+      const response = await request(app).post("/auth/register").send({
+        name: "John Doe",
+        email: "john@example.com",
+        password: "password123",
+        roleId: 1,
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
     });
   });
 
-  describe("GET /health", () => {
-    test("should return health status", async () => {
+  describe("POST /auth/login", () => {
+    it("should login user successfully", async () => {
+      // Reset mocks and setup for successful login
+      jest.clearAllMocks();
+      const mockUser = {
+        id: "user-123",
+        email: { value: "john@example.com" },
+        name: "John Doe",
+        roleType: "TEAMLEAD",
+        password: { compare: jest.fn().mockResolvedValue(true) },
+      };
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(mockUser);
+      (mockTokenGenerationService.generateToken as jest.Mock).mockResolvedValue("mock-token");
+
       const app = createApp({
-        registerUserUseCase: new RegisterUserUseCase(mockUserRepository, mockEmailService, mockRoleRepository),
-        loginUseCase: new LoginUseCase(mockUserRepository),
+        registerUseCase: new RegisterUseCase(
+          mockUserRepository,
+          mockEmailService,
+          mockRoleRepository
+        ),
+        loginUseCase: new LoginUseCase(
+          mockUserRepository,
+          mockTokenGenerationService
+        ),
+        getRecipientsUseCase: new GetRecipientsUseCase(mockUserRepository),
+        createKudosUseCase: new CreateKudosUseCase(
+          mockKudosRepository,
+          mockUserRepository,
+          mockCategoryRepository
+        ),
+        getCategoriesUseCase: new GetCategoriesUseCase(mockCategoryRepository),
       });
-      const response = await request(app).get("/health").expect(200);
 
-      expect(response.body).toMatchObject({
-        status: "healthy",
-        service: "digital-kudos-wall-backend",
-        version: "1.0.0",
+      const response = await request(app).post("/auth/login").send({
+        email: "john@example.com",
+        password: "password123",
       });
-      expect(response.body.timestamp).toBeDefined();
-    });
-  });
 
-  describe("GET /nonexistent", () => {
-    test("should return 404 for unknown routes", async () => {
-      const app = createApp({
-        registerUserUseCase: new RegisterUserUseCase(mockUserRepository, mockEmailService, mockRoleRepository),
-        loginUseCase: new LoginUseCase(mockUserRepository),
-      });
-      const response = await request(app).get("/nonexistent").expect(404);
-
-      expect(response.body).toMatchObject({
-        error: "Not Found",
-        message: "Route /nonexistent not found",
-      });
-      expect(response.body.timestamp).toBeDefined();
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
     });
   });
 });

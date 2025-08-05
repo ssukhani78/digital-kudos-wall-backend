@@ -1,34 +1,40 @@
 import { UseCase } from "../../../../../shared/core/use-case";
+import { Result } from "../../../../../shared/core/result";
+import { User } from "../../../domain/user.entity";
 import { UserRepository } from "../../../domain/user.repository";
 
-export interface GetRecipientsDTO {
-  loggedInUserId: string;
+interface GetRecipientsDTO {
+  userId: string;
 }
 
-export interface RecipientResponse {
+interface RecipientResponse {
   id: string;
   name: string;
+  email: string;
 }
 
+type GetRecipientsResult = Result<RecipientResponse[]>;
+
 export class GetRecipientsUseCase
-  implements UseCase<GetRecipientsDTO, RecipientResponse[]>
+  implements UseCase<GetRecipientsDTO, GetRecipientsResult>
 {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(private userRepository: UserRepository) {}
 
-  async execute(request: GetRecipientsDTO): Promise<RecipientResponse[]> {
+  async execute(request: GetRecipientsDTO): Promise<GetRecipientsResult> {
     try {
-      const users = await this.userRepository.findAllExceptUser(
-        request.loggedInUserId
-      );
+      const users = await this.userRepository.findAllExceptUser(request.userId);
 
-      const recipients: RecipientResponse[] = users.map((user) => ({
+      const response: RecipientResponse[] = users.map((user) => ({
         id: user.id.toString(),
         name: user.name,
+        email: user.email.value,
       }));
 
-      return recipients;
+      return Result.ok<RecipientResponse[]>(response);
     } catch (error) {
-      throw new Error("Failed to fetch recipients");
+      return Result.fail<RecipientResponse[], string>(
+        "Failed to fetch recipients"
+      );
     }
   }
 }

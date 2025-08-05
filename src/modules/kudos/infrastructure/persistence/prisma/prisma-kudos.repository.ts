@@ -52,7 +52,7 @@ export class PrismaKudosRepository implements KudosRepository {
       orderBy: { createdAt: "desc" },
     });
 
-    return kudos.map((kudos) =>
+    return kudos.map((kudos:any) =>
       Kudos.create({
         categoryId: kudos.categoryId,
         senderId: kudos.senderId,
@@ -70,17 +70,17 @@ export class PrismaKudosRepository implements KudosRepository {
         sender: true,
         recipient: true,
         category: true,
-      },
+        },
       orderBy: { createdAt: "desc" },
     });
 
-    return kudos.map((kudos) =>
+    return kudos.map((kudos:any) =>
       Kudos.create({
         categoryId: kudos.categoryId,
-        senderId: kudos.senderId,
-        recipientId: kudos.recipientId,
-        message: kudos.message,
-        createdAt: kudos.createdAt,
+          senderId: kudos.senderId,
+          recipientId: kudos.recipientId,
+          message: kudos.message,
+          createdAt: kudos.createdAt,
       }).getValue()
     );
   }

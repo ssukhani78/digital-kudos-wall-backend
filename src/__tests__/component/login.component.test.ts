@@ -1,12 +1,14 @@
 import request from "supertest";
 import { Application } from "express";
 import { UserRepository } from "../../modules/user/domain/user.repository";
-import { LoginUseCase } from "../../modules/user/application/use-cases/login/login.use-case";
 import { createApp } from "../../app";
 import { UserBuilder } from "../../modules/user/infrastructure/persistence/prisma/__tests__/user.builder";
-import { RegisterUserUseCase } from "../../modules/user/application/use-cases/register-user/register-user.use-case";
 import { TokenGenerationService } from "../../modules/user/domain/token-generation.service";
 import { GetRecipientsUseCase } from "../../modules/user/application/use-cases/get-recipients/get-recipients.use-case";
+import { LoginUseCase } from "../../modules/auth/application/use-cases/login/login.use-case";
+import { RegisterUseCase } from "../../modules/auth/application/use-cases/register/register.use-case";
+import { CreateKudosUseCase } from "../../modules/kudos/application/use-cases/create-kudos/create-kudos.use-case";
+import { GetCategoriesUseCase } from "../../modules/category/application/use-cases/get-categories/get-categories.use-case";
 
 describe("Login API (Component Test)", () => {
   let app: Application;
@@ -39,18 +41,28 @@ describe("Login API (Component Test)", () => {
       execute: jest.fn(),
       userRepository: mockUserRepository,
       emailService: { sendConfirmationEmail: jest.fn() },
-    } as unknown as RegisterUserUseCase;
+    } as unknown as RegisterUseCase;
 
     // Mock the get recipients use case since we don't need it for these tests
     const mockGetRecipientsUseCase = {
       execute: jest.fn(),
     } as unknown as GetRecipientsUseCase;
 
+    const mockCreateKudosUseCase = {
+      execute: jest.fn(),
+    } as unknown as CreateKudosUseCase;
+
+    const mockGetCategoriesUseCase = {
+      execute: jest.fn(),
+    } as unknown as GetCategoriesUseCase;
+
     // Create the app with the test-configured use cases
     app = createApp({
-      registerUserUseCase: mockRegisterUseCase,
+      registerUseCase: mockRegisterUseCase,
       loginUseCase,
       getRecipientsUseCase: mockGetRecipientsUseCase,
+      createKudosUseCase: mockCreateKudosUseCase,
+      getCategoriesUseCase: mockGetCategoriesUseCase,
     });
 
     // Initialize test data builder
@@ -76,14 +88,15 @@ describe("Login API (Component Test)", () => {
 
       // Act & Assert
       const response = await request(app)
-        .post("/users/login")
+        .post("/auth/login")
         .send(requestBody)
         .expect(200);
 
       // Verify response structure
-      expect(response.body).toHaveProperty("token");
-      expect(typeof response.body.token).toBe("string");
-      expect(response.body).toEqual({
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveProperty("token");
+      expect(typeof response.body.data.token).toBe("string");
+      expect(response.body.data).toEqual({
         token: expect.any(String),
         user: {
           id: validUser.id.toString(),
@@ -115,13 +128,12 @@ describe("Login API (Component Test)", () => {
 
       // Act & Assert
       const response = await request(app)
-        .post("/users/login")
+        .post("/auth/login")
         .send(requestBody)
         .expect(401);
 
-      expect(response.body).toEqual({
-        message: "Invalid email or password",
-      });
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe("Invalid email or password");
     });
 
     it("should return 400 when request body is invalid", async () => {
@@ -133,7 +145,7 @@ describe("Login API (Component Test)", () => {
 
       // Act & Assert
       await request(app)
-        .post("/users/login")
+        .post("/auth/login")
         .send(invalidRequestBody)
         .expect(400);
     });
@@ -151,13 +163,12 @@ describe("Login API (Component Test)", () => {
 
       // Act & Assert
       const response = await request(app)
-        .post("/users/login")
+        .post("/auth/login")
         .send(requestBody)
         .expect(500);
 
-      expect(response.body).toEqual({
-        message: "An unexpected error occurred",
-      });
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe("An unexpected error occurred");
     });
   });
 });

@@ -3,16 +3,21 @@ import cors from "cors";
 import helmet from "helmet";
 import setupUserRoutes from "./modules/user/presentation/routes/user.routes";
 import { makeKudosRoutes } from "./modules/kudos/presentation/routes/kudos.routes";
-import { RegisterUserUseCase } from "./modules/user/application/use-cases/register-user/register-user.use-case";
-import { LoginUseCase } from "./modules/user/application/use-cases/login/login.use-case";
+import { makeAuthRoutes } from "./modules/auth/presentation/routes/auth.routes";
+import { makeCategoryRoutes } from "./modules/category/presentation/routes/category.routes";
+import { RegisterUseCase } from "./modules/auth/application/use-cases/register/register.use-case";
+import { LoginUseCase } from "./modules/auth/application/use-cases/login/login.use-case";
 import { GetRecipientsUseCase } from "./modules/user/application/use-cases/get-recipients/get-recipients.use-case";
 import { CreateKudosUseCase } from "./modules/kudos/application/use-cases/create-kudos/create-kudos.use-case";
-import { GetCategoriesUseCase } from "./modules/kudos/application/use-cases/get-categories/get-categories.use-case";
+import { GetCategoriesUseCase } from "./modules/category/application/use-cases/get-categories/get-categories.use-case";
+import { RegisterController } from "./modules/auth/presentation/controllers/register.controller";
+import { LoginController } from "./modules/auth/presentation/controllers/login.controller";
 import { KudosController } from "./modules/kudos/presentation/controllers/kudos.controller";
+import { CategoryController } from "./modules/category/presentation/controllers/category.controller";
 import { testSupportRouter } from "./modules/test-support/http/test-support.routes";
 
 export interface AppDependencies {
-  registerUserUseCase: RegisterUserUseCase;
+  registerUseCase: RegisterUseCase;
   loginUseCase: LoginUseCase;
   getRecipientsUseCase: GetRecipientsUseCase;
   createKudosUseCase: CreateKudosUseCase;
@@ -54,18 +59,29 @@ export function createApp(dependencies: AppDependencies): Application {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
+  // Setup Auth routes
+  const registerController = new RegisterController(
+    dependencies.registerUseCase
+  );
+  const loginController = new LoginController(dependencies.loginUseCase);
+  const authRoutes = makeAuthRoutes(registerController, loginController);
+  app.use("/auth", authRoutes);
+
+  // Setup User routes
   const userRoutes = setupUserRoutes({
-    registerUserUseCase: dependencies.registerUserUseCase,
-    loginUseCase: dependencies.loginUseCase,
     getRecipientsUseCase: dependencies.getRecipientsUseCase,
   });
   app.use("/users", userRoutes);
 
-  // Setup Kudos routes
-  const kudosController = new KudosController(
-    dependencies.createKudosUseCase,
+  // Setup Category routes
+  const categoryController = new CategoryController(
     dependencies.getCategoriesUseCase
   );
+  const categoryRoutes = makeCategoryRoutes(categoryController);
+  app.use("/categories", categoryRoutes);
+
+  // Setup Kudos routes
+  const kudosController = new KudosController(dependencies.createKudosUseCase);
   const kudosRoutes = makeKudosRoutes(kudosController);
   app.use("/kudos", kudosRoutes);
 
@@ -90,7 +106,9 @@ export function createApp(dependencies: AppDependencies): Application {
       version: "1.0.0",
       endpoints: {
         health: "/health",
+        auth: "/auth",
         users: "/users",
+        categories: "/categories",
         kudos: "/kudos",
       },
     });

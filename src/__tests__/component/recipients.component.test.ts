@@ -1,7 +1,5 @@
 import request from "supertest";
 import { createApp } from "../../app";
-import { RegisterUserUseCase } from "../../modules/user/application/use-cases/register-user/register-user.use-case";
-import { LoginUseCase } from "../../modules/user/application/use-cases/login/login.use-case";
 import { GetRecipientsUseCase } from "../../modules/user/application/use-cases/get-recipients/get-recipients.use-case";
 import { UserRepository } from "../../modules/user/domain/user.repository";
 import { EmailService } from "../../modules/user/domain/email.service";
@@ -10,12 +8,20 @@ import { UserBuilder } from "../../modules/user/infrastructure/persistence/prism
 import { RoleType } from "../../modules/user/domain/value-objects/role-type";
 import { UniqueEntityID } from "../../shared/domain/unique-entity-id";
 import { TokenGenerationService } from "../../modules/user/domain/token-generation.service";
+import { RegisterUseCase } from "../../modules/auth/application/use-cases/register/register.use-case";
+import { LoginUseCase } from "../../modules/auth/application/use-cases/login/login.use-case";
+import { CreateKudosUseCase } from "../../modules/kudos/application/use-cases/create-kudos/create-kudos.use-case";
+import { GetCategoriesUseCase } from "../../modules/category/application/use-cases/get-categories/get-categories.use-case";
+import { KudosRepository } from "../../modules/kudos/domain/kudos.repository";
+import { CategoryRepository } from "../../modules/category/domain/category.repository";
 
 describe("Recipients Component Tests", () => {
   let mockUserRepository: UserRepository;
   let mockEmailService: EmailService;
   let mockRoleRepository: RoleRepository;
   let mockTokenGenerationService: TokenGenerationService;
+  let mockKudosRepository: KudosRepository;
+  let mockCategoryRepository: CategoryRepository;
 
   beforeEach(() => {
     mockUserRepository = {
@@ -36,6 +42,19 @@ describe("Recipients Component Tests", () => {
 
     mockTokenGenerationService = {
       generateToken: jest.fn(),
+    };
+
+    mockKudosRepository = {
+      create: jest.fn(),
+      findById: jest.fn(),
+      findByRecipientId: jest.fn(),
+      findBySenderId: jest.fn(),
+    };
+
+    mockCategoryRepository = {
+      findById: jest.fn(),
+      findByName: jest.fn(),
+      findAll: jest.fn(),
     };
   });
 
@@ -60,7 +79,7 @@ describe("Recipients Component Tests", () => {
 
       const getRecipientsUseCase = new GetRecipientsUseCase(mockUserRepository);
       const app = createApp({
-        registerUserUseCase: new RegisterUserUseCase(
+        registerUseCase: new RegisterUseCase(
           mockUserRepository,
           mockEmailService,
           mockRoleRepository
@@ -70,6 +89,12 @@ describe("Recipients Component Tests", () => {
           mockTokenGenerationService
         ),
         getRecipientsUseCase,
+        createKudosUseCase: new CreateKudosUseCase(
+          mockKudosRepository,
+          mockUserRepository,
+          mockCategoryRepository
+        ),
+        getCategoriesUseCase: new GetCategoriesUseCase(mockCategoryRepository),
       });
 
       (mockUserRepository.findAllExceptUser as jest.Mock).mockResolvedValue(
@@ -89,12 +114,11 @@ describe("Recipients Component Tests", () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual({
-        data: [
-          { id: "user-1", name: "User One" },
-          { id: "user-2", name: "User Two" },
-        ],
-      });
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toEqual([
+        { id: "user-1", name: "User One", email: "user1@example.com" },
+        { id: "user-2", name: "User Two", email: "user2@example.com" },
+      ]);
       expect(mockUserRepository.findAllExceptUser).toHaveBeenCalledWith(
         loggedInUserId
       );
@@ -104,7 +128,7 @@ describe("Recipients Component Tests", () => {
       // Arrange
       const getRecipientsUseCase = new GetRecipientsUseCase(mockUserRepository);
       const app = createApp({
-        registerUserUseCase: new RegisterUserUseCase(
+        registerUseCase: new RegisterUseCase(
           mockUserRepository,
           mockEmailService,
           mockRoleRepository
@@ -114,13 +138,21 @@ describe("Recipients Component Tests", () => {
           mockTokenGenerationService
         ),
         getRecipientsUseCase,
+        createKudosUseCase: new CreateKudosUseCase(
+          mockKudosRepository,
+          mockUserRepository,
+          mockCategoryRepository
+        ),
+        getCategoriesUseCase: new GetCategoriesUseCase(mockCategoryRepository),
       });
 
       // Act
       const response = await request(app).get("/users/recipients").expect(401);
 
       // Assert
-      expect(response.body.message).toBe("authToken in headers is required");
+      expect(response.body.message).toBe(
+        "Authorization header missing or invalid"
+      );
       expect(mockUserRepository.findAllExceptUser).not.toHaveBeenCalled();
     });
 
@@ -128,7 +160,7 @@ describe("Recipients Component Tests", () => {
       // Arrange
       const getRecipientsUseCase = new GetRecipientsUseCase(mockUserRepository);
       const app = createApp({
-        registerUserUseCase: new RegisterUserUseCase(
+        registerUseCase: new RegisterUseCase(
           mockUserRepository,
           mockEmailService,
           mockRoleRepository
@@ -138,6 +170,12 @@ describe("Recipients Component Tests", () => {
           mockTokenGenerationService
         ),
         getRecipientsUseCase,
+        createKudosUseCase: new CreateKudosUseCase(
+          mockKudosRepository,
+          mockUserRepository,
+          mockCategoryRepository
+        ),
+        getCategoriesUseCase: new GetCategoriesUseCase(mockCategoryRepository),
       });
 
       const invalidToken = "invalid-token";
@@ -149,7 +187,7 @@ describe("Recipients Component Tests", () => {
         .expect(401);
 
       // Assert
-      expect(response.body.message).toBe("Invalid or expired token");
+      expect(response.body.message).toBe("Invalid token format");
       expect(mockUserRepository.findAllExceptUser).not.toHaveBeenCalled();
     });
 
@@ -158,7 +196,7 @@ describe("Recipients Component Tests", () => {
       const loggedInUserId = "user-123";
       const getRecipientsUseCase = new GetRecipientsUseCase(mockUserRepository);
       const app = createApp({
-        registerUserUseCase: new RegisterUserUseCase(
+        registerUseCase: new RegisterUseCase(
           mockUserRepository,
           mockEmailService,
           mockRoleRepository
@@ -168,6 +206,12 @@ describe("Recipients Component Tests", () => {
           mockTokenGenerationService
         ),
         getRecipientsUseCase,
+        createKudosUseCase: new CreateKudosUseCase(
+          mockKudosRepository,
+          mockUserRepository,
+          mockCategoryRepository
+        ),
+        getCategoriesUseCase: new GetCategoriesUseCase(mockCategoryRepository),
       });
 
       // Create an expired token (expired 1 hour ago)
@@ -183,7 +227,7 @@ describe("Recipients Component Tests", () => {
         .expect(401);
 
       // Assert
-      expect(response.body.message).toBe("Invalid or expired token");
+      expect(response.body.message).toBe("Token expired");
       expect(mockUserRepository.findAllExceptUser).not.toHaveBeenCalled();
     });
 
@@ -192,7 +236,7 @@ describe("Recipients Component Tests", () => {
       const loggedInUserId = "user-123";
       const getRecipientsUseCase = new GetRecipientsUseCase(mockUserRepository);
       const app = createApp({
-        registerUserUseCase: new RegisterUserUseCase(
+        registerUseCase: new RegisterUseCase(
           mockUserRepository,
           mockEmailService,
           mockRoleRepository
@@ -202,6 +246,12 @@ describe("Recipients Component Tests", () => {
           mockTokenGenerationService
         ),
         getRecipientsUseCase,
+        createKudosUseCase: new CreateKudosUseCase(
+          mockKudosRepository,
+          mockUserRepository,
+          mockCategoryRepository
+        ),
+        getCategoriesUseCase: new GetCategoriesUseCase(mockCategoryRepository),
       });
 
       (mockUserRepository.findAllExceptUser as jest.Mock).mockRejectedValue(
@@ -221,7 +271,7 @@ describe("Recipients Component Tests", () => {
         .expect(500);
 
       // Assert
-      expect(response.body.message).toBe("An unexpected error occurred");
+      expect(response.body.message).toBe("Failed to fetch recipients");
       expect(mockUserRepository.findAllExceptUser).toHaveBeenCalledWith(
         loggedInUserId
       );
@@ -232,7 +282,7 @@ describe("Recipients Component Tests", () => {
       const loggedInUserId = "user-123";
       const getRecipientsUseCase = new GetRecipientsUseCase(mockUserRepository);
       const app = createApp({
-        registerUserUseCase: new RegisterUserUseCase(
+        registerUseCase: new RegisterUseCase(
           mockUserRepository,
           mockEmailService,
           mockRoleRepository
@@ -242,6 +292,12 @@ describe("Recipients Component Tests", () => {
           mockTokenGenerationService
         ),
         getRecipientsUseCase,
+        createKudosUseCase: new CreateKudosUseCase(
+          mockKudosRepository,
+          mockUserRepository,
+          mockCategoryRepository
+        ),
+        getCategoriesUseCase: new GetCategoriesUseCase(mockCategoryRepository),
       });
 
       (mockUserRepository.findAllExceptUser as jest.Mock).mockResolvedValue([]);
@@ -259,9 +315,8 @@ describe("Recipients Component Tests", () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual({
-        data: [],
-      });
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toEqual([]);
       expect(mockUserRepository.findAllExceptUser).toHaveBeenCalledWith(
         loggedInUserId
       );
@@ -272,7 +327,7 @@ describe("Recipients Component Tests", () => {
       const loggedInUserId = "user-123";
       const getRecipientsUseCase = new GetRecipientsUseCase(mockUserRepository);
       const app = createApp({
-        registerUserUseCase: new RegisterUserUseCase(
+        registerUseCase: new RegisterUseCase(
           mockUserRepository,
           mockEmailService,
           mockRoleRepository
@@ -282,6 +337,12 @@ describe("Recipients Component Tests", () => {
           mockTokenGenerationService
         ),
         getRecipientsUseCase,
+        createKudosUseCase: new CreateKudosUseCase(
+          mockKudosRepository,
+          mockUserRepository,
+          mockCategoryRepository
+        ),
+        getCategoriesUseCase: new GetCategoriesUseCase(mockCategoryRepository),
       });
 
       const mockRecipients = [
@@ -310,9 +371,10 @@ describe("Recipients Component Tests", () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual({
-        data: [{ id: "user-456", name: "Other User" }],
-      });
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toEqual([
+        { id: "user-456", name: "Other User", email: "other@example.com" },
+      ]);
 
       // Verify that the logged-in user ID was passed to exclude them
       expect(mockUserRepository.findAllExceptUser).toHaveBeenCalledWith(

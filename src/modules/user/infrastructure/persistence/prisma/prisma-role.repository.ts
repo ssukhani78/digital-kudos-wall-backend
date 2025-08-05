@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../../../../../shared/infrastructure/persistence/prisma/client";
 import { RoleRepository } from "../../../domain/role.repository";
 
 export class PrismaRoleRepository implements RoleRepository {
